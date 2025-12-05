@@ -178,38 +178,52 @@ def join_team():
     if not key_info:
         return jsonify({"success": False, "error": "无效的访问密钥"}), 400
 
-    # 方案2优化：智能选择Team + 限制重试次数
-    # 1. 获取所有Team（排除token过期的）
-    all_teams = Team.get_all()
-    all_teams = [t for t in all_teams if t.get('token_status') != 'expired']
-
-    if not all_teams:
-        return jsonify({"success": False, "error": "当前无可用 Team，请联系管理员"}), 400
-
-    # 2. 只选择通过我们系统邀请的成员数 < 4 的Team
-    available_teams = []
-    for team in all_teams:
-        invited_count = Invitation.get_success_count_by_team(team['id'])
-        if invited_count < 4:
-            team['invited_count'] = invited_count  # 保存邀请数
-            available_teams.append(team)
-
-    if not available_teams:
-        return jsonify({"success": False, "error": "所有 Team 名额已满，请联系管理员"}), 400
-
-    # 3. 按最近邀请时间排序（最近成功的在前，命中率更高）
-    available_teams.sort(key=lambda t: t.get('last_invite_at') or '', reverse=True)
-
-    # 4. 优先使用已分配的Team
+    # 检查邀请码是否绑定了特定Team
     assigned_team_id = key_info.get('team_id')
+    
     if assigned_team_id:
-        assigned_team = next((t for t in available_teams if t['id'] == assigned_team_id), None)
-        if assigned_team:
-            # 将已分配的Team移到列表最前面
-            available_teams = [assigned_team] + [t for t in available_teams if t['id'] != assigned_team_id]
+        # 邀请码绑定了特定Team，只能加入该Team
+        team = Team.get_by_id(assigned_team_id)
+        if not team:
+            return jsonify({"success": False, "error": "该邀请码绑定的Team不存在"}), 400
+        
+        if team.get('token_status') == 'expired':
+            return jsonify({"success": False, "error": "该Team的Token已过期，请联系管理员"}), 400
+        
+        # 检查Team是否已满
+        invited_count = Invitation.get_success_count_by_team(team['id'])
+        if invited_count >= 4:
+            return jsonify({"success": False, "error": f"{team['name']} 已达到人数上限"}), 400
+        
+        # 只尝试这一个Team
+        available_teams = [team]
+        max_attempts = 1
+    else:
+        # 邀请码未绑定Team，走智能分配逻辑
+        # 1. 获取所有Team（排除token过期的）
+        all_teams = Team.get_all()
+        all_teams = [t for t in all_teams if t.get('token_status') != 'expired']
 
-    # 5. 最多尝试3个Team
-    max_attempts = 3
+        if not all_teams:
+            return jsonify({"success": False, "error": "当前无可用 Team，请联系管理员"}), 400
+
+        # 2. 只选择通过我们系统邀请的成员数 < 4 的Team
+        available_teams = []
+        for team in all_teams:
+            invited_count = Invitation.get_success_count_by_team(team['id'])
+            if invited_count < 4:
+                team['invited_count'] = invited_count  # 保存邀请数
+                available_teams.append(team)
+
+        if not available_teams:
+            return jsonify({"success": False, "error": "所有 Team 名额已满，请联系管理员"}), 400
+
+        # 3. 按最近邀请时间排序（最近成功的在前，命中率更高）
+        available_teams.sort(key=lambda t: t.get('last_invite_at') or '', reverse=True)
+        
+        # 最多尝试3个Team
+        max_attempts = 3
+
     tried_teams = []
     last_error = None
 
