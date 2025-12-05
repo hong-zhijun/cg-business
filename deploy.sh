@@ -53,7 +53,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/chatgpt-team
-Environment="ADMIN_PASSWORD=Moyu123456@"
+Environment="ADMIN_PASSWORD=Moyudashi@123"
 Environment="PORT=5002"
 ExecStart=/usr/bin/python3 /opt/chatgpt-team/app_new.py
 Restart=always
@@ -91,7 +91,7 @@ if systemctl is-active --quiet chatgpt-team; then
     echo "   用户页面: http://$(hostname -I | awk '{print $1}'):5002/"
     echo "   管理后台: http://$(hostname -I | awk '{print $1}'):5002/admin"
     echo ""
-    echo "🔑 管理员密码: Moyu123456@"
+    echo "🔑 管理员密码: Moyudashi@123"
     echo ""
     echo "📊 常用命令："
     echo "   查看状态: systemctl status chatgpt-team"
