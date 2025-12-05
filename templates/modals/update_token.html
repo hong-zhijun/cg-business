@@ -1,0 +1,84 @@
+<!-- 8. 更新 Token 弹窗 -->
+<div
+    id="updateTokenModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+    style="display: none">
+    <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg mx-4 transition-all transform">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                更新 Token
+            </h2>
+            <button onclick="closeModal('updateTokenModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="updateTokenForm" onsubmit="submitUpdateToken(event)" class="space-y-5">
+            <input type="hidden" id="update_token_team_id" />
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">新的 Session JSON</label>
+                <textarea
+                    id="update_token_session"
+                    required
+                    placeholder='{"user": {...}, "accessToken": "..."}'
+                    rows="8"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors font-mono text-sm"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button
+                    type="button"
+                    onclick="closeModal('updateTokenModal')"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                    更新 Token
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openUpdateTokenModal(teamId) {
+        document.getElementById("update_token_team_id").value = teamId;
+        document.getElementById("update_token_session").value = "";
+        openModal("updateTokenModal");
+    }
+
+    async function submitUpdateToken(e) {
+        e.preventDefault();
+        const teamId = document.getElementById("update_token_team_id").value;
+        const sessionJson = document.getElementById("update_token_session").value;
+
+        if (!sessionJson) return;
+
+        try {
+            const response = await fetch(`/api/admin/teams/${teamId}/token`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_data: sessionJson }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("Token 更新成功！");
+                closeModal("updateTokenModal");
+                loadTeams();
+            } else {
+                alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+</script>

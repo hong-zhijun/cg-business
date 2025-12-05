@@ -1,0 +1,103 @@
+<!-- 10. 新增邀请码 弹窗 -->
+<div
+    id="createKeyModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+    style="display: none">
+    <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg mx-4 transition-all transform">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                新增邀请码
+            </h2>
+            <button onclick="closeModal('createKeyModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="createKeyForm" onsubmit="createKeys(event)" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">生成数量</label>
+                <input
+                    type="number"
+                    id="key_count"
+                    name="count"
+                    value="1"
+                    min="1"
+                    max="20"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div class="flex items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <input type="checkbox" id="key_is_temp" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                <label for="key_is_temp" class="ml-2 block text-sm text-gray-700"> 1日试用邀请码 </label>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button
+                    type="button"
+                    onclick="closeModal('createKeyModal')"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                    生成邀请码
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openCreateKeyModal() {
+        openModal("createKeyModal");
+    }
+
+    async function createKeys(e) {
+        e.preventDefault();
+
+        const count = parseInt(document.getElementById("key_count").value) || 1;
+        const isTemp = document.getElementById("key_is_temp").checked;
+
+        try {
+            const response = await fetch("/api/admin/keys", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    count: count,
+                    is_temp: isTemp,
+                    temp_hours: isTemp ? 24 : 0,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.keys && data.keys.length > 0) {
+                    const keyCodes = data.keys.map((k) => k.key_code).join("\n");
+                    navigator.clipboard
+                        .writeText(keyCodes)
+                        .then(() => {
+                            alert(`✅ 成功生成 ${count} 个邀请码并已复制到剪贴板！`);
+                        })
+                        .catch((err) => {
+                            alert(`成功生成 ${count} 个邀请码，但复制失败: ${err}`);
+                        });
+                } else {
+                    alert(`成功生成 ${count} 个邀请码！`);
+                }
+                document.getElementById("createKeyForm").reset();
+                closeModal("createKeyModal");
+
+                // 如果列表窗口是开着的，刷新它 (这里简单处理：不强制刷新，除非用户去点)
+                // 但为了体验好，我们可以后台静默刷新
+                loadKeys();
+            } else {
+                alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+</script>

@@ -1,0 +1,184 @@
+<!-- 5. 成员管理弹窗 -->
+<div id="membersModal" class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm" style="display: none">
+    <div class="relative top-20 mx-auto p-6 border w-11/12 max-w-3xl shadow-2xl rounded-xl bg-white transition-all">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+            <h2 id="membersModalTitle" class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span id="membersModalTitleText">成员管理</span>
+            </h2>
+            <button class="close cursor-pointer text-gray-400 hover:text-gray-600 transition-colors" onclick="closeMembersModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="membersList" class="mb-8">加载中...</div>
+    </div>
+</div>
+
+<script>
+    async function showMembers(teamId, teamName) {
+        currentTeamId = teamId;
+        document.getElementById("membersModalTitleText").textContent = `${teamName} - 成员管理`;
+        document.getElementById("invite_team_id").value = teamId;
+        document.getElementById("membersModal").style.display = "block";
+
+        try {
+            const response = await fetch(`/api/admin/teams/${teamId}/members`);
+            const data = await response.json();
+
+            if (data.success) {
+                displayMembers(data.members);
+            } else {
+                document.getElementById("membersList").innerHTML = `<p class="text-red-500">加载失败: ${data.error}</p>`;
+            }
+        } catch (error) {
+            document.getElementById("membersList").innerHTML = `<p class="text-red-500">加载失败: ${error.message}</p>`;
+        }
+    }
+
+    function displayMembers(members) {
+        const container = document.getElementById("membersList");
+
+        if (!members || members.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 italic">暂无成员</p>';
+            return;
+        }
+
+        let html = '<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">当前成员</h3><div class="space-y-3">';
+
+        members.forEach((member) => {
+            const isOwner = member.role === "account-owner";
+            const joinTime = member.created_at || member.created_time || member.created;
+
+            html += `
+            <div class="flex justify-between items-center p-4 bg-white border border-gray-200 rounded-lg">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <strong class="text-gray-900">${member.email || member.name || "Unknown"}</strong>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            isOwner ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"
+                        }">${isOwner ? "所有者" : "成员"}</span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs text-gray-500">
+                        <span>User ID: ${member.user_id}</span>
+                        <span>加入时间: ${formatDate(joinTime)}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <button onclick="openMemberNoteModal('${member.user_id}', '${member.email}', decodeURIComponent('${encodeURIComponent(
+                member.note || ""
+            )}'))" class="px-3 py-1.5 border border-gray-200 text-sm rounded hover:bg-gray-50 transition-colors">备注</button>
+                    ${
+                        !isOwner
+                            ? `<button onclick="kickMember('${member.user_id}', '${member.email}')" class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-sm rounded hover:bg-red-100 transition-colors flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>踢出</button>`
+                            : ""
+                    }
+                </div>
+            </div>
+        `;
+        });
+
+        html += "</div>";
+        container.innerHTML = html;
+    }
+
+    async function kickMember(userId, email) {
+        if (!(await showConfirm(`确定要踢出 ${email} 吗？`))) return;
+
+        try {
+            const response = await fetch(`/api/admin/teams/${currentTeamId}/members/${userId}`, {
+                method: "DELETE",
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("成员已踢出");
+                showMembers(currentTeamId, document.getElementById("membersModalTitleText").textContent.split(" - ")[0]);
+            } else {
+                alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+
+    function closeMembersModal() {
+        document.getElementById("membersModal").style.display = "none";
+    }
+
+    let editingUserId = null;
+    function openMemberNoteModal(userId, email, note) {
+        editingUserId = userId;
+        document.getElementById("memberNoteTitleText").textContent = `${email} - 备注`;
+        document.getElementById("member_note_text").value = note || "";
+        document.getElementById("memberNoteModal").style.display = "block";
+    }
+
+    function closeMemberNoteModal() {
+        document.getElementById("memberNoteModal").style.display = "none";
+    }
+
+    async function submitMemberNote() {
+        const note = document.getElementById("member_note_text").value || "";
+        try {
+            const response = await fetch(`/api/admin/teams/${currentTeamId}/members/${editingUserId}/note`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ note }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert("备注已保存");
+                closeMemberNoteModal();
+                const teamName = document.getElementById("membersModalTitleText").textContent.split(" - ")[0];
+                showMembers(currentTeamId, teamName);
+            } else {
+                alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+</script>
+
+<div id="memberNoteModal" class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm" style="display: none">
+    <div class="relative top-28 mx-auto p-6 border w-full max-w-xl shadow-2xl rounded-xl bg-white transition-all">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900"><span id="memberNoteTitleText">成员备注</span></h2>
+            <button class="close cursor-pointer text-gray-400 hover:text-gray-600 transition-colors" onclick="closeMemberNoteModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">备注内容</label>
+            <textarea
+                id="member_note_text"
+                rows="6"
+                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors font-mono text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button
+                type="button"
+                onclick="closeMemberNoteModal()"
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                取消
+            </button>
+            <button
+                type="button"
+                onclick="submitMemberNote()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                保存备注
+            </button>
+        </div>
+    </div>
+</div>

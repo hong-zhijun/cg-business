@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ChatGPT Team 管理后台</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#2563eb",
+                            secondary: "#64748b",
+                            danger: "#dc2626",
+                            success: "#16a34a",
+                        },
+                    },
+                },
+            };
+        </script>
+    </head>
+
+    <body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- 标题栏 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        ChatGPT Team 管理后台
+                    </h1>
+                    <p class="text-gray-500 text-sm mt-1">高效管理您的团队与成员</p>
+                </div>
+            </div>
+
+            <!-- 顶部操作栏 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <!-- 组1: 邀请码管理 -->
+                    <div class="flex items-center gap-2">
+                        <button
+                            onclick="openKeysListModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            邀请码管理
+                        </button>
+                        <!-- <button
+                            onclick="openCreateKeyModal()"
+                            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            新增邀请码
+                        </button> -->
+                    </div>
+
+                    <div class="w-px h-6 bg-gray-200 hidden md:block mx-2"></div>
+
+                    <!-- 组2: 邀请与记录 -->
+                    <div class="flex items-center gap-2">
+                        <button
+                            onclick="openModal('adminInviteModal')"
+                            class="inline-flex items-center px-3 py-2 border border-emerald-200 shadow-sm text-sm font-medium rounded-lg text-emerald-700 bg-white hover:bg-emerald-50 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            邀请成员
+                        </button>
+                        <button
+                            onclick="openInvitationsModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-gray-400 group-hover:text-emerald-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            邀请记录
+                        </button>
+                    </div>
+
+                    <div class="w-px h-6 bg-gray-200 hidden md:block mx-2"></div>
+
+                    <!-- 组3: 踢人与安全 -->
+                    <div class="flex items-center gap-2">
+                        <button
+                            onclick="openKickLogsModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            踢人日志
+                        </button>
+                        <button
+                            onclick="openModal('manualKickModal')"
+                            class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-red-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                            </svg>
+                            手动踢人
+                        </button>
+                        <button
+                            onclick="openModal('autoKickConfigModal')"
+                            class="inline-flex items-center px-3 py-2 border border-orange-200 shadow-sm text-sm font-medium rounded-lg text-orange-700 bg-white hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-orange-500 group-hover:text-orange-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            自动踢人
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams 列表 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-lg mr-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </span>
+                        Teams 列表
+                    </h2>
+
+                    <!-- 功能按钮组 -->
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            onclick="openModal('addTeamModal')"
+                            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            添加 Team
+                        </button>
+                        <div class="w-px h-8 bg-gray-200 mx-1"></div>
+                        <button
+                            onclick="deleteExpiredTeams()"
+                            class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            清理过期
+                        </button>
+                    </div>
+                </div>
+
+                <div id="teamsList" class="overflow-x-auto">
+                    <!-- 表格内容由 JS 生成 -->
+                    <p class="text-gray-500 text-sm italic text-center py-4">加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== Modals ================== -->
+        {% include 'modals/add_team.html' %} {% include 'modals/admin_invite.html' %} {% include 'modals/manual_kick.html' %} {% include
+        'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
+        'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
+        'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %}
+
+        <div
+            id="alertModal"
+            class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">提示</h2>
+                    <button onclick="closeModal('alertModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="alertMessage" class="text-gray-700 whitespace-pre-line"></div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button
+                        onclick="closeModal('alertModal')"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div
+            id="confirmModal"
+            class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">确认</h2>
+                    <button id="confirmClose" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="confirmMessage" class="text-gray-700 whitespace-pre-line"></div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button id="confirmCancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        取消
+                    </button>
+                    <button id="confirmOk" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let currentTeamId = null;
+            let allTeamsData = []; // 存储所有Teams数据
+            let teamsLoaded = false;
+
+            window.onload = function () {
+                loadTeams(); // 自动加载 Teams
+                loadAutoKickConfig();
+
+                // These listeners depend on elements that are now in included files.
+                // Since scripts in includes run immediately, the DOM elements should exist if the include places them in the DOM.
+                // But verify if these elements IDs are unique and present.
+                // The included HTML is injected into the body. So document.getElementById should find them.
+
+                const inviteTempCheckbox = document.getElementById("invite_is_temp");
+                if (inviteTempCheckbox) {
+                    inviteTempCheckbox.addEventListener("change", function () {
+                        document.getElementById("temp_hours_group").style.display = this.checked ? "block" : "none";
+                    });
+                }
+
+                const adminInviteTempCheckbox = document.getElementById("admin_invite_is_temp");
+                if (adminInviteTempCheckbox) {
+                    adminInviteTempCheckbox.addEventListener("change", function () {
+                        document.getElementById("admin_temp_hours_group").style.display = this.checked ? "block" : "none";
+                    });
+                }
+            };
+
+            // 通用模态框控制
+            function openModal(modalId) {
+                document.getElementById(modalId).style.display = "flex";
+            }
+
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = "none";
+            }
+
+            function showConfirm(msg) {
+                return new Promise(function (resolve) {
+                    var messageEl = document.getElementById("confirmMessage");
+                    var modalEl = document.getElementById("confirmModal");
+                    var okBtn = document.getElementById("confirmOk");
+                    var cancelBtn = document.getElementById("confirmCancel");
+                    var closeBtn = document.getElementById("confirmClose");
+                    if (!messageEl || !modalEl || !okBtn || !cancelBtn) {
+                        var nativeConfirm = window.confirm;
+                        resolve(nativeConfirm(String(msg)));
+                        return;
+                    }
+                    messageEl.textContent = String(msg);
+                    openModal("confirmModal");
+                    function cleanup() {
+                        okBtn.removeEventListener("click", onOk);
+                        cancelBtn.removeEventListener("click", onCancel);
+                        modalEl.removeEventListener("click", onOverlay);
+                        if (closeBtn) closeBtn.removeEventListener("click", onCancel);
+                    }
+                    function onOk(e) {
+                        e.stopPropagation();
+                        cleanup();
+                        closeModal("confirmModal");
+                        resolve(true);
+                    }
+                    function onCancel(e) {
+                        e.stopPropagation();
+                        cleanup();
+                        closeModal("confirmModal");
+                        resolve(false);
+                    }
+                    function onOverlay(e) {
+                        if (e.target && e.target.id === "confirmModal") {
+                            cleanup();
+                            closeModal("confirmModal");
+                            resolve(false);
+                        }
+                    }
+                    okBtn.addEventListener("click", onOk);
+                    cancelBtn.addEventListener("click", onCancel);
+                    if (closeBtn) closeBtn.addEventListener("click", onCancel);
+                    modalEl.addEventListener("click", onOverlay);
+                });
+            }
+
+            (function () {
+                const nativeAlert = window.alert;
+                window.alert = function (msg) {
+                    const messageEl = document.getElementById("alertMessage");
+                    const modalEl = document.getElementById("alertModal");
+                    if (messageEl && modalEl) {
+                        messageEl.textContent = String(msg);
+                        openModal("alertModal");
+                    } else {
+                        nativeAlert(String(msg));
+                    }
+                };
+            })();
+
+            async function loadTeams() {
+                try {
+                    const response = await fetch("/api/admin/teams");
+                    const data = await response.json();
+
+                    if (data.success) {
+                        allTeamsData = data.teams; // 保存数据
+                        teamsLoaded = true;
+                        displayTeams(data.teams);
+                    }
+                } catch (error) {
+                    console.error("加载 Teams 失败:", error);
+                }
+            }
+
+            function displayTeams(teams) {
+                const container = document.getElementById("teamsList");
+
+                if (teams.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-4">暂无 Team</p>';
+                    return;
+                }
+
+                // 使用表格形式渲染
+                let html = `
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team 名称</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成员数</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">到期时间</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                `;
+
+                teams.forEach((team) => {
+                    let tokenStatusBadge = "";
+                    if (team.token_status === "expired") {
+                        tokenStatusBadge =
+                            '<span class="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full border border-red-200 whitespace-nowrap flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Token过期</span>';
+                    } else if (team.token_error_count > 0) {
+                        tokenStatusBadge = `<span class="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full border border-orange-200 whitespace-nowrap flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>错误${team.token_error_count}</span>`;
+                    }
+
+                    html += `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                            <div class="flex items-center">
+                                ${team.name}
+                                ${tokenStatusBadge}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500">
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">${team.member_count}/4</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 max-w-xs truncate" title="${team.email}">${team.email || "-"}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(team.active_until)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${new Date(team.created_at).toLocaleString("zh-CN")}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center gap-2">
+                                <button onclick="openInviteModal(${team.id}, '${
+                        team.name
+                    }')" class="text-green-600 hover:text-green-900 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                    邀请
+                                </button>
+                                <span class="text-gray-300">|</span>
+                                <button onclick="showMembers(${team.id}, '${team.name}')" class="text-blue-600 hover:text-blue-900 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    成员
+                                </button>
+                                <span class="text-gray-300">|</span>
+                                <button onclick="openUpdateTokenModal(${
+                                    team.id
+                                })" class="text-gray-600 hover:text-blue-600 flex items-center" title="更新Token">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    更新
+                                </button>
+                                <span class="text-gray-300">|</span>
+                                <button onclick="showTeamDetails(${
+                                    team.id
+                                })" class="text-gray-600 hover:text-blue-600 flex items-center" title="查看详情">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    详情
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                });
+
+                html += "</tbody></table>";
+                container.innerHTML = html;
+            }
+
+            function formatDate(dateVal) {
+                if (!dateVal) return "未知";
+                try {
+                    const date = new Date(dateVal);
+                    if (isNaN(date.getTime())) return "Invalid Date";
+                    return date.toLocaleString("zh-CN");
+                } catch (e) {
+                    return "Invalid Date";
+                }
+            }
+
+            async function deleteExpiredTeams() {
+                if (!(await showConfirm("确定要删除所有Token已过期的Team吗？\n\n此操作不可恢复！"))) return;
+
+                try {
+                    const response = await fetch("/api/admin/teams/delete-expired", {
+                        method: "POST",
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (data.deleted_count > 0) {
+                            const teamList = data.deleted_teams.join("\n- ");
+                            alert(`✅ ${data.message}\n\n已删除的Team：\n- ${teamList}`);
+                        } else {
+                            alert("✅ " + data.message);
+                        }
+                        loadTeams();
+                    } else {
+                        alert("错误: " + data.error);
+                    }
+                } catch (error) {
+                    alert("请求失败: " + error.message);
+                }
+            }
+
+            window.onclick = function (event) {
+                if (event.target.classList.contains("modal")) {
+                    event.target.style.display = "none";
+                }
+            };
+        </script>
+    </body>
+</html>

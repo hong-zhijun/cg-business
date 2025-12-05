@@ -1,0 +1,53 @@
+name: Auto Deploy
+
+on:
+    push:
+        branches: [main]
+    # 允许手动触发
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Deploy to Server
+              uses: appleboy/scp-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  port: 22
+                  source: "."
+                  target: "/opt/chatgpt-team"
+                  # 关键：排除数据库文件，防止覆盖现有数据！
+                  exclude: ".git,.github,chatgpt_team.db,backups,__pycache__,*.pyc"
+
+            - name: Restart Service
+              uses: appleboy/ssh-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  port: 22
+                  script: |
+                      echo "Starting deployment script..."
+                      cd /opt/chatgpt-team
+
+                      # 安装可能新增的依赖
+                      if [ -f "requirements_new.txt" ]; then
+                          echo "📦 Installing dependencies..."
+                          pip3 install -r requirements_new.txt
+                      fi
+
+                      # 重启服务
+                      echo "🚀 Restarting service..."
+                      if systemctl is-active --quiet chatgpt-team; then
+                          systemctl restart chatgpt-team
+                          echo "✅ Service restarted successfully."
+                      else
+                          echo "⚠️ Service not running, trying to start..."
+                          systemctl start chatgpt-team
+                      fi

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>加入 ChatGPT Team</title>
+        <link rel="stylesheet" href="/static/style.css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#2563eb",
+                        },
+                    },
+                },
+            };
+        </script>
+    </head>
+    <body class="min-h-screen bg-gray-50 text-gray-800">
+        <div class="max-w-2xl mx-auto px-4 py-10">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h1 class="text-2xl font-bold text-gray-900">🚀 加入 ChatGPT Team</h1>
+                <p class="text-gray-500 text-sm mt-1">输入您的邮箱和访问密钥即可加入团队</p>
+
+                <form id="joinForm" class="mt-6 space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">📧 邮箱地址</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="your@email.com"
+                            required
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
+                    </div>
+
+                    <div>
+                        <label for="key_code" class="block text-sm font-medium text-gray-700 mb-1">🔑 访问密钥</label>
+                        <input
+                            type="text"
+                            id="key_code"
+                            name="key_code"
+                            placeholder="输入您获得的访问密钥"
+                            required
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        加入团队
+                    </button>
+                </form>
+
+                <div id="message" class="message mt-4" style="display: none"></div>
+            </div>
+
+            <div class="text-center text-sm text-gray-500 mt-6">
+                <p>💡 提示：访问密钥由团队管理员提供，每个密钥只能使用一次</p>
+            </div>
+        </div>
+
+        <div
+            id="confirmModal"
+            class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center"
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">确认</h3>
+                    <button id="confirmClose" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="confirmMessage" class="text-gray-700 whitespace-pre-line"></div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button id="confirmCancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                    <button id="confirmOk" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const form = document.getElementById("joinForm");
+            const messageDiv = document.getElementById("message");
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById("email").value.trim();
+                const key_code = document.getElementById("key_code").value.trim();
+
+                if (!email || !key_code) {
+                    showMessage("请填写所有字段", "error");
+                    return;
+                }
+
+                // 确认邮箱是否正确
+                const confirmMessage = `📧 请确认您的邮箱地址是否正确：\n\n${email}\n\n⚠️ 邀请邮件将发送到此邮箱，请仔细核对！\n如果邮箱错误，请点击"取消"重新输入。`;
+                if (!(await showConfirm(confirmMessage))) {
+                    return;
+                }
+
+                // 禁用按钮
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = "处理中...";
+
+                try {
+                    const response = await fetch("/api/join", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email, key_code }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showMessage(data.message, "success");
+                        form.reset();
+
+                        // 显示额外提示
+                        setTimeout(async () => {
+                            if (await showConfirm("✅ 邀请已发送！\n\n是否打开邮箱查看邀请？")) {
+                                window.open("https://mail.google.com", "_blank");
+                            }
+                        }, 1000);
+                    } else {
+                        showMessage(data.error || "加入失败", "error");
+                    }
+                } catch (error) {
+                    showMessage("网络错误，请稍后重试", "error");
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "加入团队";
+                }
+            });
+
+            function showMessage(text, type) {
+                messageDiv.innerHTML = text.replace(/\n/g, "<br>");
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = "block";
+
+                if (type === "success") {
+                    setTimeout(() => {
+                        messageDiv.style.display = "none";
+                    }, 10000);
+                } else {
+                    setTimeout(() => {
+                        messageDiv.style.display = "none";
+                    }, 5000);
+                }
+            }
+            function showConfirm(msg) {
+                return new Promise(function (resolve) {
+                    var modalEl = document.getElementById("confirmModal");
+                    var msgEl = document.getElementById("confirmMessage");
+                    var okBtn = document.getElementById("confirmOk");
+                    var cancelBtn = document.getElementById("confirmCancel");
+                    if (!modalEl || !msgEl || !okBtn || !cancelBtn) {
+                        var nativeConfirm = window.confirm;
+                        resolve(nativeConfirm(String(msg)));
+                        return;
+                    }
+                    msgEl.textContent = String(msg);
+                    modalEl.style.display = "block";
+                    function cleanup() {
+                        okBtn.removeEventListener("click", onOk);
+                        cancelBtn.removeEventListener("click", onCancel);
+                        modalEl.removeEventListener("click", onOverlay);
+                        var closeBtn = document.getElementById("confirmClose");
+                        if (closeBtn) closeBtn.removeEventListener("click", onCancel);
+                    }
+                    function onOk(e) {
+                        e.stopPropagation();
+                        cleanup();
+                        modalEl.style.display = "none";
+                        resolve(true);
+                    }
+                    function onCancel(e) {
+                        e.stopPropagation();
+                        cleanup();
+                        modalEl.style.display = "none";
+                        resolve(false);
+                    }
+                    function onOverlay(e) {
+                        if (e.target && e.target.id === "confirmModal") {
+                            cleanup();
+                            modalEl.style.display = "none";
+                            resolve(false);
+                        }
+                    }
+                    okBtn.addEventListener("click", onOk);
+                    cancelBtn.addEventListener("click", onCancel);
+                    var closeBtn = document.getElementById("confirmClose");
+                    if (closeBtn) closeBtn.addEventListener("click", onCancel);
+                    modalEl.addEventListener("click", onOverlay);
+                });
+            }
+        </script>
+    </body>
+</html>

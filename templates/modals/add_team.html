@@ -1,0 +1,101 @@
+<!-- 1. 添加 Team 弹窗 -->
+<div
+    id="addTeamModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+    style="display: none">
+    <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg mx-4 transition-all transform">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                添加新 Team
+            </h2>
+            <button onclick="closeModal('addTeamModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="addTeamForm" onsubmit="addTeam(event)" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Team 名称</label>
+                <input
+                    type="text"
+                    name="name"
+                    required
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                    placeholder="例如: 研发部" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Session JSON (从浏览器复制)</label>
+                <textarea
+                    name="session_data"
+                    required
+                    placeholder='{"user": {...}, "accessToken": "..."}'
+                    rows="6"
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors font-mono text-sm"></textarea>
+            </div>
+            <div class="flex justify-start mt-2">
+                <button
+                    type="button"
+                    onclick="copySessionUrl()"
+                    class="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    复制session获取地址
+                </button>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button
+                    type="button"
+                    onclick="closeModal('addTeamModal')"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                    添加 Team
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function copySessionUrl() {
+        navigator.clipboard
+            .writeText("https://chatgpt.com/api/auth/session")
+            .then(() => {
+                alert("session获取地址已复制到剪贴板");
+            })
+            .catch((err) => {
+                alert("复制失败: " + err);
+            });
+    }
+    async function addTeam(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch("/api/admin/teams", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: formData.get("name"),
+                    session_data: formData.get("session_data"),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("Team 添加成功！");
+                e.target.reset();
+                closeModal("addTeamModal");
+                loadTeams();
+            } else {
+                alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+</script>

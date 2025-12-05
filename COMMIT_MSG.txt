@@ -1,0 +1,27 @@
+feat: 集成小红书自动发货系统 (按需同步版)
+
+主要变更：
+1. 新增小红书订单同步服务 (xhs_order_sync.py)
+   - 支持 Cookie 认证
+   - 实现按需同步逻辑 (用户输入时触发)
+   - 极速模式：只提取最近 3-5 个订单
+
+2. 数据库扩展 (database.py)
+   - 新增 Order 模型
+   - 新增 XHSConfig 模型
+
+3. 管理后台优化 (admin_new.html)
+   - 新增小红书配置面板 (Cookie 管理)
+   - 优化邀请码列表 UI (支持折叠、隐藏/显示)
+   - 移除定时同步配置，简化操作
+
+4. API 扩展 (app_new.py)
+   - 新增 /api/admin/xhs/* 相关路由
+   - 优化 /api/join 路由，集成按需同步逻辑
+
+5. 文档与工具
+   - 新增 upgrade_xhs.sh 升级脚本
+   - 新增 XHS_UPGRADE_GUIDE.md 升级指南
+   - 新增 FINAL_VERSION.md 功能说明
+
+Closes #XHS-Integration
