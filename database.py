@@ -98,6 +98,11 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # 字段已存在
 
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN note TEXT')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
         # Access Keys 表 (重构: 每个邀请码对应一个 Team)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS access_keys (
@@ -307,6 +312,18 @@ class Team:
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (count, team_id))
+
+    @staticmethod
+    def update_note(team_id, note):
+        """更新 Team 的备注"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE teams
+                SET note = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (note, team_id))
 
     @staticmethod
     def delete(team_id):

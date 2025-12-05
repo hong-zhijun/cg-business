@@ -598,6 +598,20 @@ def update_team_token(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/<int:team_id>/note', methods=['PUT'])
+@admin_required
+def update_team_note(team_id):
+    """更新 Team 的备注"""
+    data = request.json
+    note = data.get('note', '')
+    
+    try:
+        Team.update_note(team_id, note)
+        return jsonify({"success": True, "message": "备注更新成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams/<int:team_id>/token-export', methods=['GET'])
 @admin_required
 def export_team_token(team_id):

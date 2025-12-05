@@ -2,75 +2,165 @@
 <div
     id="teamDetailsModal"
     class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
-    style="display: none">
-    <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-md mx-4 transition-all transform">
+    style="display: none"
+>
+    <div
+        class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-md mx-4 transition-all transform"
+    >
         <div class="flex justify-between items-center mb-6">
-            <h2 id="teamDetailsTitle" class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h2
+                id="teamDetailsTitle"
+                class="text-xl font-bold text-gray-900 flex items-center gap-2"
+            >
+                <svg
+                    class="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                 </svg>
                 <span id="teamDetailsTitleText">Team 详情</span>
             </h2>
-            <button onclick="closeModal('teamDetailsModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <button
+                onclick="closeModal('teamDetailsModal')"
+                class="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+                <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    ></path>
                 </svg>
             </button>
         </div>
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Account ID</label>
-                <div class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <code id="detail_account_id" class="font-mono text-sm text-gray-800 flex-1 break-all"></code>
+                <label
+                    class="block text-xs font-medium text-gray-500 uppercase mb-1"
+                    >Account ID</label
+                >
+                <div
+                    class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+                >
+                    <code
+                        id="detail_account_id"
+                        class="font-mono text-sm text-gray-800 flex-1 break-all"
+                    ></code>
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Organization ID</label>
-                <div class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <code id="detail_org_id" class="font-mono text-sm text-gray-800 flex-1 break-all"></code>
+                <label
+                    class="block text-xs font-medium text-gray-500 uppercase mb-1"
+                    >Organization ID</label
+                >
+                <div
+                    class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+                >
+                    <code
+                        id="detail_org_id"
+                        class="font-mono text-sm text-gray-800 flex-1 break-all"
+                    ></code>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 uppercase mb-1">开始时间</label>
-                    <div class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <span id="detail_active_start" class="text-sm text-gray-800"></span>
+                    <label
+                        class="block text-xs font-medium text-gray-500 uppercase mb-1"
+                        >开始时间</label
+                    >
+                    <div
+                        class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+                    >
+                        <span
+                            id="detail_active_start"
+                            class="text-sm text-gray-800"
+                        ></span>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 uppercase mb-1">到期时间</label>
-                    <div class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <span id="detail_active_until" class="text-sm text-gray-800"></span>
+                    <label
+                        class="block text-xs font-medium text-gray-500 uppercase mb-1"
+                        >到期时间</label
+                    >
+                    <div
+                        class="flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+                    >
+                        <span
+                            id="detail_active_until"
+                            class="text-sm text-gray-800"
+                        ></span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="mt-8 space-y-3">
             <button
-                id="detail_export_btn"
-                class="w-full flex justify-center items-center px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                id="update_token_btn"
+                class="w-full flex justify-center items-center px-4 py-2 bg-green-50 border border-green-200 shadow-sm text-sm font-medium rounded-lg text-green-700 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all gap-2"
+            >
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                </svg>
+                更新 Token
+            </button>
+            <button
+                id="detail_export_btn"
+                class="w-full flex justify-center items-center px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2"
+            >
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
                 </svg>
                 导出 Token
             </button>
             <button
                 id="detail_delete_btn"
-                class="w-full flex justify-center items-center px-4 py-2 bg-red-50 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="w-full flex justify-center items-center px-4 py-2 bg-red-50 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all gap-2"
+            >
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                 </svg>
                 删除 Team
             </button>
@@ -83,11 +173,25 @@
         const team = allTeamsData.find((t) => t.id === teamId);
         if (!team) return;
 
-        document.getElementById("teamDetailsTitleText").textContent = `${team.name} - 详情`;
-        document.getElementById("detail_account_id").textContent = team.account_id || "N/A";
-        document.getElementById("detail_org_id").textContent = team.organization_id || "无";
-        document.getElementById("detail_active_start").textContent = formatDate(team.active_start);
-        document.getElementById("detail_active_until").textContent = formatDate(team.active_until);
+        document.getElementById(
+            "teamDetailsTitleText"
+        ).textContent = `${team.name} - 详情`;
+        document.getElementById("detail_account_id").textContent =
+            team.account_id || "N/A";
+        document.getElementById("detail_org_id").textContent =
+            team.organization_id || "无";
+        document.getElementById("detail_active_start").textContent = formatDate(
+            team.active_start
+        );
+        document.getElementById("detail_active_until").textContent = formatDate(
+            team.active_until
+        );
+
+        // 绑定更新Token按钮事件
+        const updateTokenBtn = document.getElementById("update_token_btn");
+        updateTokenBtn.onclick = function () {
+            openUpdateTokenModal(team.id);
+        };
 
         // 绑定导出按钮事件
         const exportBtn = document.getElementById("detail_export_btn");
@@ -106,21 +210,30 @@
 
     async function exportToken(teamId, teamName) {
         try {
-            const response = await fetch(`/api/admin/teams/${teamId}/token-export`);
+            const response = await fetch(
+                `/api/admin/teams/${teamId}/token-export`
+            );
             const data = await response.json();
 
             if (data.success) {
-                const tokenInfo = `Team: ${teamName}\nAccess Token: ${data.access_token}\nAccount ID: ${data.account_id}\nOrganization ID: ${
+                const tokenInfo = `Team: ${teamName}\nAccess Token: ${
+                    data.access_token
+                }\nAccount ID: ${data.account_id}\nOrganization ID: ${
                     data.organization_id || "N/A"
                 }`;
 
                 navigator.clipboard
                     .writeText(data.access_token)
                     .then(() => {
-                        alert(`✅ ${teamName} 的 Token 已复制到剪贴板！\n\n${tokenInfo}`);
+                        alert(
+                            `✅ ${teamName} 的 Token 已复制到剪贴板！\n\n${tokenInfo}`
+                        );
                     })
                     .catch((err) => {
-                        prompt("复制失败，请手动复制Token：", data.access_token);
+                        prompt(
+                            "复制失败，请手动复制Token：",
+                            data.access_token
+                        );
                     });
             } else {
                 alert("错误: " + data.error);
@@ -131,7 +244,12 @@
     }
 
     async function deleteTeam(teamId, teamName) {
-        if (!(await showConfirm(`确定要删除 Team "${teamName}" 吗？此操作不可恢复！`))) return;
+        if (
+            !(await showConfirm(
+                `确定要删除 Team "${teamName}" 吗？此操作不可恢复！`
+            ))
+        )
+            return;
 
         try {
             const response = await fetch(`/api/admin/teams/${teamId}`, {
