@@ -27,6 +27,8 @@ jobs:
 
             - name: Restart Service
               uses: appleboy/ssh-action@master
+              env:
+                  ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
               with:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
@@ -45,8 +47,13 @@ jobs:
                       # 更新管理员密码（如果 ADMIN_PASSWORD 环境变量存在）
                       if [ -n "$ADMIN_PASSWORD" ]; then
                           echo "🔐 Updating ADMIN_PASSWORD in systemd service..."
-                          sudo sed -i "s/Environment=\"ADMIN_PASSWORD=[^\"]*\"/Environment=\"ADMIN_PASSWORD=$ADMIN_PASSWORD\"/" /etc/systemd/system/chatgpt-team.service
-                          sudo systemctl daemon-reload
+                          # 使用 sed 替换密码
+                          sed -i "s/Environment=\"ADMIN_PASSWORD=[^\"]*\"/Environment=\"ADMIN_PASSWORD=$ADMIN_PASSWORD\"/" /etc/systemd/system/chatgpt-team.service
+                          # 重新加载 systemd 配置
+                          systemctl daemon-reload
+                          echo "✅ ADMIN_PASSWORD updated successfully."
+                      else
+                          echo "⚠️ ADMIN_PASSWORD not set in GitHub Secrets, skipping update."
                       fi
 
                       # 重启服务
@@ -58,5 +65,3 @@ jobs:
                           echo "⚠️ Service not running, trying to start..."
                           systemctl start chatgpt-team
                       fi
-              env:
-                  ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
