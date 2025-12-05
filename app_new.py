@@ -262,7 +262,7 @@ def join_team():
             AccessKey.cancel(key_info['id'])
             return jsonify({
                 "success": True,
-                "message": f"✅ 您已是 {team['name']} 团队成员！",
+                "message": "✅ 您已是团队成员！",
                 "team_name": team['name'],
                 "email": email
             })
@@ -297,7 +297,7 @@ def join_team():
             AccessKey.cancel(key_info['id'])
             Team.update_last_invite(team['id'])
 
-            message = f"🎉 成功加入 {team['name']} 团队！\n\n📧 请立即查收邮箱 {email} 的邀请邮件并确认加入。\n\n💡 提示：邮件可能在垃圾箱中，请注意查看。"
+            message = f"🎉 加入成功！\n\n📧 请立即查收邮箱 {email} 的邀请邮件并确认加入。\n\n💡 提示：邮件可能在垃圾箱中，请注意查看。"
             if key_info['is_temp'] and key_info['temp_hours'] > 0:
                 message += f"\n\n⏰ 注意：这是一个 {key_info['temp_hours']} 小时临时邀请，到期后如果管理员未确认，将自动踢出。"
 
@@ -339,7 +339,7 @@ def join_team():
                     AccessKey.cancel(key_info['id'])
                     Team.update_last_invite(team['id'])
 
-                    message = f"🎉 成功加入 {team['name']} 团队！（验证确认）\n\n📧 请立即查收邮箱 {email} 的邀请邮件并确认加入。"
+                    message = f"🎉 加入成功！（验证确认）\n\n📧 请立即查收邮箱 {email} 的邀请邮件并确认加入。"
                     if key_info['is_temp'] and key_info['temp_hours'] > 0:
                         message += f"\n\n⏰ 注意：这是一个 {key_info['temp_hours']} 小时临时邀请。"
 
