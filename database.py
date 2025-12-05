@@ -714,12 +714,12 @@ class Invitation:
 
     @staticmethod
     def get_all_emails_by_team(team_id):
-        """获取 Team 的所有已邀请邮箱列表（包括所有状态，避免误踢pending成员）"""
+        """获取 Team 的所有成功邀请的邮箱列表（只统计成功状态，失败的可以重新邀请）"""
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT DISTINCT email FROM invitations
-                WHERE team_id = ?
+                WHERE team_id = ? AND status = 'success'
             ''', (team_id,))
             return [row[0] for row in cursor.fetchall()]
 

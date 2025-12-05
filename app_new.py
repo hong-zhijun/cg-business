@@ -932,9 +932,12 @@ def admin_invite_member(team_id):
     if len(invited_emails) >= 4:
         return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
 
-    # 检查该邮箱是否已被邀请
+    # 检查该邮箱是否已被成功邀请
     if email in invited_emails:
         return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+
+    # 如果之前有失败记录，先删除（允许重新邀请）
+    Invitation.delete_by_email(team_id, email)
 
     # 执行邀请
     result = invite_to_team(team['access_token'], team['account_id'], email, team_id)

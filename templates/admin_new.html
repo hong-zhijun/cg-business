@@ -420,14 +420,13 @@
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${new Date(team.created_at).toLocaleString("zh-CN")}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center gap-2">
-                                <button onclick="openInviteModal(${team.id}, '${
-                        team.name
-                    }')" class="text-green-600 hover:text-green-900 flex items-center">
+                                <button onclick="openInviteModal(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
+                                    class="text-green-600 hover:text-green-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                     邀请
                                 </button>
                                 <span class="text-gray-300">|</span>
-                                <button onclick="generateTeamKey(${team.id}, '${team.name.replace(/'/g, "\\'")}')
+                                <button onclick="generateTeamKey(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
                                     class="text-indigo-600 hover:text-indigo-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                                     邀请码
@@ -500,42 +499,83 @@
 
             // 为指定Team生成邀请码
             async function generateTeamKey(teamId, teamName) {
-                const result = await showConfirm(`确定为 "${teamName}" 生成专属邀请码吗？\n\n请选择类型：`);
-                if (!result) return;
-
-                // 显示类型选择对话框
-                const isTemp = await showConfirm(`请选择邀请码类型：\n\n点击“确定” = 1日试用\n点击“取消” = 永久邀请码`);
-
-                try {
-                    const response = await fetch("/api/admin/keys", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            team_id: teamId,
-                            is_temp: isTemp,
-                            temp_hours: isTemp ? 24 : 0,
-                            count: 1
-                        }),
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success && data.keys && data.keys.length > 0) {
-                        const keyCode = data.keys[0].key_code;
-                        await navigator.clipboard.writeText(keyCode);
-                        alert(`✅ 已为 "${teamName}" 生成${isTemp ? '1日试用' : '永久'}邀请码！\n\n邀请码已复制到剪贴板：\n${keyCode}`);
-                        // 如果邀请码列表已加载，刷新它
-                        if (keysLoaded) {
-                            loadKeys();
-                        }
-                    } else {
-                        alert("错误: " + (data.error || "生成失败"));
+                // 创建自定义对话框
+                const modalHTML = `
+                    <div id="teamKeyModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+                        <div class="bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">生成专属邀请码</h3>
+                            <div class="mb-4">
+                                <p class="text-gray-700 mb-3">为 <span class="font-semibold text-blue-600">${teamName}</span> 生成邀请码</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">选择类型</label>
+                                <select id="keyTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="permanent">永久邀请码</option>
+                                    <option value="temp">1日试用邀请码</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end gap-3">
+                                <button id="cancelKeyBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                                <button id="confirmKeyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">生成</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加到页面
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                const modal = document.getElementById('teamKeyModal');
+                const select = document.getElementById('keyTypeSelect');
+                const cancelBtn = document.getElementById('cancelKeyBtn');
+                const confirmBtn = document.getElementById('confirmKeyBtn');
+                
+                // 取消按钮
+                cancelBtn.onclick = () => {
+                    modal.remove();
+                };
+                
+                // 点击背景关闭
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
                     }
-                } catch (error) {
-                    alert("请求失败: " + error.message);
-                }
+                };
+                
+                // 生成按钮
+                confirmBtn.onclick = async () => {
+                    const isTemp = select.value === 'temp';
+                    modal.remove();
+                    
+                    try {
+                        const response = await fetch("/api/admin/keys", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                team_id: teamId,
+                                is_temp: isTemp,
+                                temp_hours: isTemp ? 24 : 0,
+                                count: 1
+                            }),
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success && data.keys && data.keys.length > 0) {
+                            const keyCode = data.keys[0].key_code;
+                            await navigator.clipboard.writeText(keyCode);
+                            alert(`✅ 已为 "${teamName}" 生成${isTemp ? '1日试用' : '永久'}邀请码！\n\n邀请码已复制到剪贴板：\n${keyCode}`);
+                            // 如果邀请码列表已加载，刷新它
+                            if (typeof keysLoaded !== 'undefined' && keysLoaded) {
+                                loadKeys();
+                            }
+                        } else {
+                            alert("错误: " + (data.error || "生成失败"));
+                        }
+                    } catch (error) {
+                        alert("请求失败: " + error.message);
+                    }
+                };
             }
 
             window.onclick = function (event) {
