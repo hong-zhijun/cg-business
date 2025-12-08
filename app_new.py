@@ -637,6 +637,23 @@ def search_teams_by_email():
     return jsonify({"success": True, "teams": teams, "count": len(teams)})
 
 
+@app.route('/api/admin/stats/total-members', methods=['GET'])
+@admin_required
+def get_total_members_count():
+    """统计所有Team的成员总数（不包括所有者）"""
+    try:
+        teams = Team.get_all()
+        total_members = 0
+        
+        for team in teams:
+            # 使用数据库中已经统计好的 member_count
+            total_members += team.get('member_count', 0)
+        
+        return jsonify({"success": True, "total_members": total_members})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams/<int:team_id>/token-export', methods=['GET'])
 @admin_required
 def export_team_token(team_id):

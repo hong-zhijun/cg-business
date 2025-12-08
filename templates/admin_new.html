@@ -346,6 +346,35 @@
                     </div>
                 </div>
 
+                <!-- 成员总数统计 -->
+                <div class="mt-4 flex justify-end">
+                    <div
+                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm"
+                    >
+                        <svg
+                            class="w-5 h-5 text-blue-600 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-700 mr-2"
+                            >成员总数：</span
+                        >
+                        <span
+                            id="totalMembersCount"
+                            class="text-lg font-bold text-blue-700"
+                            >-</span
+                        >
+                    </div>
+                </div>
+
                 <div id="teamsList" class="overflow-x-auto">
                     <!-- 表格内容由 JS 生成 -->
                     <p class="text-gray-500 text-sm italic text-center py-4">
@@ -466,6 +495,7 @@
 
             window.onload = function () {
                 loadTeams(); // 自动加载 Teams
+                loadTotalMembersCount(); // 加载成员总数
                 loadAutoKickConfig();
 
                 // These listeners depend on elements that are now in included files.
@@ -580,6 +610,30 @@
                     }
                 } catch (error) {
                     console.error("加载 Teams 失败:", error);
+                }
+            }
+
+            // 加载成员总数
+            async function loadTotalMembersCount() {
+                try {
+                    const response = await fetch(
+                        "/api/admin/stats/total-members"
+                    );
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.getElementById(
+                            "totalMembersCount"
+                        ).textContent = data.total_members;
+                    } else {
+                        document.getElementById(
+                            "totalMembersCount"
+                        ).textContent = "0";
+                    }
+                } catch (error) {
+                    console.error("加载成员总数失败:", error);
+                    document.getElementById("totalMembersCount").textContent =
+                        "0";
                 }
             }
 
