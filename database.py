@@ -222,10 +222,10 @@ class Team:
     
     @staticmethod
     def get_all():
-        """获取所有 Teams"""
+        """获取所有 Teams，按到期时间倒序排列（还有很久才过期的在上面，快过期的在下面）"""
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM teams ORDER BY created_at DESC')
+            cursor.execute('SELECT * FROM teams ORDER BY active_until DESC')
             return [dict(row) for row in cursor.fetchall()]
     
     @staticmethod
