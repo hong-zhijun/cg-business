@@ -612,6 +612,31 @@ def update_team_note(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/search', methods=['GET'])
+@admin_required
+def search_teams_by_email():
+    """通过邮箱搜索包含该成员的Team列表"""
+    email = request.args.get('email', '').strip()
+    
+    if not email:
+        return jsonify({"success": False, "error": "请输入邮箱"}), 400
+    
+    # 从 invitations 表查询包含该邮箱的 team_id 列表
+    team_ids = Invitation.get_teams_by_email(email)
+    
+    if not team_ids:
+        return jsonify({"success": True, "teams": [], "message": f"未找到包含 {email} 的Team"})
+    
+    # 获取这些team的详细信息
+    teams = []
+    for team_id in team_ids:
+        team = Team.get_by_id(team_id)
+        if team:
+            teams.append(team)
+    
+    return jsonify({"success": True, "teams": teams, "count": len(teams)})
+
+
 @app.route('/api/admin/teams/<int:team_id>/token-export', methods=['GET'])
 @admin_required
 def export_team_token(team_id):
