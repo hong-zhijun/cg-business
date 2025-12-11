@@ -959,6 +959,29 @@ class MemberNote:
         return execute_with_retry(_exec)
 
     @staticmethod
+    def delete_not_in(team_id, user_ids):
+        """删除指定Team中不在 user_ids 列表中的成员"""
+        if not user_ids:
+            # 如果列表为空，说明该Team没有成员，删除该Team所有成员记录
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM member_notes WHERE team_id = ?', (team_id,))
+            return
+
+        # 构建 SQL 占位符
+        placeholders = ','.join(['?'] * len(user_ids))
+        
+        with get_db() as conn:
+            cursor = conn.cursor()
+            # 这里的 params 需要包含 team_id 和所有的 user_ids
+            params = [team_id] + user_ids
+            cursor.execute(f'''
+                DELETE FROM member_notes 
+                WHERE team_id = ? 
+                AND user_id NOT IN ({placeholders})
+            ''', params)
+
+    @staticmethod
     def get_source_ranking():
         """统计各来源的成员数量（排除所有者和空来源）"""
         with get_db() as conn:

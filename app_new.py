@@ -920,10 +920,13 @@ def refresh_members(team_id):
         Team.update_member_count(team_id, len(non_owner_members))
 
         # 同步每个成员到 member_notes
+        current_user_ids = []
         for member in members:
             user_id = member.get('id')
             if not user_id:
                 continue
+            
+            current_user_ids.append(user_id)
             
             email = member.get('email')
             role = member.get('role')
@@ -946,6 +949,9 @@ def refresh_members(team_id):
                  join_time = member.get('created')
 
             MemberNote.sync_member(team_id, user_id, email, role, join_time)
+            
+        # 删除不在当前列表中的成员（即已退出的成员）
+        MemberNote.delete_not_in(team_id, current_user_ids)
             
         return jsonify({"success": True, "message": "成员列表已刷新"})
     else:
