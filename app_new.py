@@ -927,8 +927,24 @@ def refresh_members(team_id):
             
             email = member.get('email')
             role = member.get('role')
-            join_time = member.get('created') # 获取加入时间戳
-            
+            # API 返回的是 created_time (ISO 8601 string)，例如 "2025-12-11T07:45:52.666554Z"
+            # 数据库需要的是 join_time (Unix timestamp int)
+            created_time_str = member.get('created_time')
+            join_time = None
+            if created_time_str:
+                try:
+                    # 处理 Z 结尾
+                    if created_time_str.endswith('Z'):
+                        created_time_str = created_time_str.replace('Z', '+00:00')
+                    dt = datetime.fromisoformat(created_time_str)
+                    join_time = int(dt.timestamp())
+                except Exception as e:
+                    print(f"Error parsing created_time: {e}")
+                    # 如果解析失败，尝试使用 created 字段（旧版API）或当前时间
+                    join_time = member.get('created')
+            else:
+                 join_time = member.get('created')
+
             MemberNote.sync_member(team_id, user_id, email, role, join_time)
             
         return jsonify({"success": True, "message": "成员列表已刷新"})
