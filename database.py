@@ -179,11 +179,46 @@ def init_db():
                 team_id INTEGER NOT NULL,
                 user_id TEXT NOT NULL,
                 note TEXT,
+                email TEXT,
+                role TEXT,
+                source TEXT,
+                join_time INTEGER,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(team_id, user_id),
                 FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
             )
         ''')
+
+        # 为 member_notes 表自动补全字段（如果不存在）
+        try:
+            cursor.execute('ALTER TABLE member_notes ADD COLUMN email TEXT')
+        except sqlite3.OperationalError:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE member_notes ADD COLUMN role TEXT')
+        except sqlite3.OperationalError:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE member_notes ADD COLUMN source TEXT')
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute('ALTER TABLE member_notes ADD COLUMN join_time INTEGER')
+        except sqlite3.OperationalError:
+            pass
+
+        # 来源字典表
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
 
         # 登录失败记录表 (fail2ban)
         cursor.execute('''
@@ -877,22 +912,67 @@ class MemberNote:
     def get(team_id, user_id):
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT note FROM member_notes WHERE team_id = ? AND user_id = ?', (team_id, user_id))
+            cursor.execute('SELECT * FROM member_notes WHERE team_id = ? AND user_id = ?', (team_id, user_id))
             row = cursor.fetchone()
-            return row[0] if row else None
+            return dict(row) if row else None
 
     @staticmethod
-    def set(team_id, user_id, note):
+    def get_all(team_id):
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM member_notes WHERE team_id = ? ORDER BY updated_at DESC', (team_id,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def update_note_and_source(team_id, user_id, note, source=None):
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                if source is not None:
+                    cursor.execute('''
+                        INSERT INTO member_notes (team_id, user_id, note, source, updated_at)
+                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT(team_id, user_id)
+                        DO UPDATE SET note = excluded.note, source = excluded.source, updated_at = CURRENT_TIMESTAMP
+                    ''', (team_id, user_id, note, source))
+                else:
+                    cursor.execute('''
+                        INSERT INTO member_notes (team_id, user_id, note, updated_at)
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT(team_id, user_id)
+                        DO UPDATE SET note = excluded.note, updated_at = CURRENT_TIMESTAMP
+                    ''', (team_id, user_id, note))
+        return execute_with_retry(_exec)
+
+    @staticmethod
+    def sync_member(team_id, user_id, email, role, join_time):
+        """同步成员基本信息 (不覆盖 note 和 source)"""
         def _exec():
             with get_db() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    INSERT INTO member_notes (team_id, user_id, note, updated_at)
-                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO member_notes (team_id, user_id, email, role, join_time, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(team_id, user_id)
-                    DO UPDATE SET note = excluded.note, updated_at = CURRENT_TIMESTAMP
-                ''', (team_id, user_id, note))
+                    DO UPDATE SET email = excluded.email, role = excluded.role, join_time = excluded.join_time, updated_at = CURRENT_TIMESTAMP
+                ''', (team_id, user_id, email, role, join_time))
         return execute_with_retry(_exec)
+
+    @staticmethod
+    def get_source_ranking():
+        """统计各来源的成员数量（排除所有者和空来源）"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT source, COUNT(*) as count 
+                FROM member_notes 
+                WHERE source IS NOT NULL 
+                  AND source != '' 
+                  AND (role != 'account-owner' OR role IS NULL) 
+                GROUP BY source 
+                ORDER BY count DESC
+            ''')
+            return [dict(row) for row in cursor.fetchall()]
 
 
 class KickLog:
@@ -981,3 +1061,35 @@ class LoginAttempt:
                 DELETE FROM login_attempts
                 WHERE created_at < datetime('now', '-' || ? || ' days')
             ''', (days,))
+
+
+class Source:
+    """来源管理"""
+    
+    @staticmethod
+    def get_all():
+        """获取所有来源"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM sources ORDER BY created_at ASC')
+            return [dict(row) for row in cursor.fetchall()]
+            
+    @staticmethod
+    def add(name):
+        """添加来源"""
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('INSERT INTO sources (name) VALUES (?)', (name,))
+                return cursor.lastrowid
+        return execute_with_retry(_exec)
+        
+    @staticmethod
+    def delete(source_id):
+        """删除来源"""
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM sources WHERE id = ?', (source_id,))
+                return cursor.rowcount > 0
+        return execute_with_retry(_exec)

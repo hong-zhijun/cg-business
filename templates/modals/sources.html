@@ -1,0 +1,160 @@
+<!-- 来源管理弹窗 -->
+<div
+    id="sourcesModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm"
+    style="display: none"
+>
+    <div
+        class="relative top-20 mx-auto p-6 border w-96 shadow-2xl rounded-xl bg-white transition-all"
+    >
+        <div
+            class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100"
+        >
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg
+                    class="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                    />
+                </svg>
+                来源管理
+            </h2>
+            <button
+                class="close cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                onclick="closeSourcesModal()"
+            >
+                <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 添加来源表单 -->
+        <div class="mb-6 flex gap-2">
+            <input
+                type="text"
+                id="newSourceInput"
+                placeholder="输入新来源名称"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+            <button
+                onclick="addSource()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+            >
+                添加
+            </button>
+        </div>
+
+        <!-- 来源列表 -->
+        <div id="sourcesList" class="space-y-2 max-h-96 overflow-y-auto">
+            <!-- 动态生成 -->
+            <p class="text-gray-500 text-sm text-center py-4">加载中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadSources() {
+        try {
+            const response = await fetch("/api/admin/sources");
+            const data = await response.json();
+
+            if (data.success) {
+                renderSources(data.sources);
+            } else {
+                alert("加载失败: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+
+    function renderSources(sources) {
+        const container = document.getElementById("sourcesList");
+        if (sources.length === 0) {
+            container.innerHTML =
+                '<p class="text-gray-500 text-sm text-center py-4">暂无数据</p>';
+            return;
+        }
+
+        let html = "";
+        sources.forEach((source) => {
+            html += `
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+                <span class="text-gray-700 font-medium">${source.name}</span>
+                <button 
+                    onclick="deleteSource(${source.id})"
+                    class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
+                    title="删除"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+        `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function addSource() {
+        const input = document.getElementById("newSourceInput");
+        const name = input.value.trim();
+
+        if (!name) return;
+
+        try {
+            const response = await fetch("/api/admin/sources", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name }),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                input.value = "";
+                loadSources(); // 刷新列表
+            } else {
+                alert("添加失败: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+
+    async function deleteSource(id) {
+        if (!confirm("确定要删除这个来源吗？")) return;
+
+        try {
+            const response = await fetch(`/api/admin/sources/${id}`, {
+                method: "DELETE",
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                loadSources(); // 刷新列表
+            } else {
+                alert("删除失败: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+</script>

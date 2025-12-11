@@ -4,8 +4,9 @@ ChatGPT Team 自动邀请系统 - 主应用
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from curl_cffi import requests as cf_requests
 import json
+import sqlite3
 from functools import wraps
-from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote
+from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source
 from datetime import datetime, timedelta
 import time
 import pytz
@@ -851,60 +852,88 @@ def kick_member(access_token, account_id, user_id):
 @app.route('/api/admin/teams/<int:team_id>/members', methods=['GET'])
 @admin_required
 def get_members(team_id):
-    """获取 Team 成员列表"""
+    """获取 Team 成员列表 (从数据库查询)"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    # 从数据库获取成员列表
+    db_members = MemberNote.get_all(team_id)
+    
+    results = []
+    for member_data in db_members:
+        # 构造返回对象，保持与API返回结构相似，方便前端处理
+        member = {
+            'id': member_data['user_id'],
+            'user_id': member_data['user_id'],
+            'email': member_data['email'],
+            'role': member_data['role'],
+            'note': member_data['note'],
+            'source': member_data['source'],
+            # 使用 join_time 如果存在，否则使用 updated_at
+            'created': member_data.get('join_time')
+        }
+        
+        # 处理时间显示
+        if member['created']:
+             try:
+                member['created_at'] = convert_to_beijing_time(member['created'])
+             except:
+                member['created_at'] = member['created']
+        else:
+             # 如果没有 join_time，尝试使用 updated_at
+             member['created_at'] = convert_to_beijing_time(member_data['updated_at'])
+
+        # 获取邀请信息
+        invitation = Invitation.get_by_user_id(team_id, member['user_id'])
+        if invitation:
+            member['invitation_id'] = invitation['id']
+            member['is_temp'] = invitation['is_temp']
+            member['is_confirmed'] = invitation['is_confirmed']
+            member['temp_expire_at'] = invitation['temp_expire_at']
+        else:
+            member['invitation_id'] = None
+            member['is_temp'] = False
+            member['is_confirmed'] = False
+            member['temp_expire_at'] = None
+            
+        results.append(member)
+
+    return jsonify({"success": True, "members": results})
+
+
+@app.route('/api/admin/teams/<int:team_id>/members/refresh', methods=['POST'])
+@admin_required
+def refresh_members(team_id):
+    """刷新 Team 成员列表 (调用 OpenAI API 并同步到数据库)"""
     team = Team.get_by_id(team_id)
     if not team:
         return jsonify({"success": False, "error": "Team 不存在"}), 404
 
     result = get_team_members(team['access_token'], team['account_id'], team_id)
 
-    # 为每个成员添加临时邀请信息
     if result['success']:
-        # 更新数据库中的成员数量
         members = result.get('members', [])
+        
+        # 更新数据库中的成员数量
         non_owner_members = [m for m in members if m.get('role') != 'account-owner']
         Team.update_member_count(team_id, len(non_owner_members))
 
-        for member in result['members']:
-            # 适配 id 字段 (user-xxx)
+        # 同步每个成员到 member_notes
+        for member in members:
             user_id = member.get('id')
             if not user_id:
                 continue
-                
-            invitation = Invitation.get_by_user_id(team_id, user_id)
-            # 同时把 user_id 注入到 member 对象中，方便前端使用
-            member['user_id'] = user_id
-            member['note'] = MemberNote.get(team_id, user_id)
             
-            # 修复加入时间显示 Invalid Date 问题
-            # API 通常返回 created 字段 (Unix 时间戳, 秒)
-            if 'created' in member:
-                try:
-                    # 统一使用 convert_to_beijing_time 处理
-                    member['created_at'] = convert_to_beijing_time(member['created'])
-                except:
-                    member['created_at'] = member['created']
-            elif 'created_time' in member:
-                try:
-                    member['created_at'] = convert_to_beijing_time(member['created_time'])
-                except Exception:
-                    member['created_at'] = member['created_time']
-            elif 'created_at' not in member:
-                # 如果没有 created 也没有 created_at，使用当前时间作为默认值
-                member['created_at'] = convert_to_beijing_time(time.time())
+            email = member.get('email')
+            role = member.get('role')
+            join_time = member.get('created') # 获取加入时间戳
             
-            if invitation:
-                member['invitation_id'] = invitation['id']
-                member['is_temp'] = invitation['is_temp']
-                member['is_confirmed'] = invitation['is_confirmed']
-                member['temp_expire_at'] = invitation['temp_expire_at'] # 数据库中已经是格式化好的字符串
-            else:
-                member['invitation_id'] = None
-                member['is_temp'] = False
-                member['is_confirmed'] = False
-                member['temp_expire_at'] = None
-
-    return jsonify(result)
+            MemberNote.sync_member(team_id, user_id, email, role, join_time)
+            
+        return jsonify({"success": True, "message": "成员列表已刷新"})
+    else:
+        return jsonify(result), result.get('status_code', 500)
 
 
 @app.route('/api/admin/teams/<int:team_id>/members/<user_id>/note', methods=['PUT'])
@@ -916,7 +945,8 @@ def update_member_note(team_id, user_id):
 
     data = request.json
     note = data.get('note', '')
-    MemberNote.set(team_id, user_id, note)
+    source = data.get('source')
+    MemberNote.update_note_and_source(team_id, user_id, note, source)
     return jsonify({"success": True})
 
 
@@ -1526,6 +1556,62 @@ def get_kick_status():
     try:
         status = auto_kick_service.get_status()
         return jsonify({"success": True, "status": status})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------
+# 来源管理 API
+# ---------------------------------------------------------------------
+
+@app.route('/api/admin/stats/source-ranking', methods=['GET'])
+@admin_required
+def get_source_ranking():
+    """获取来源排行榜"""
+    try:
+        ranking = MemberNote.get_source_ranking()
+        return jsonify({"success": True, "ranking": ranking})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/sources', methods=['GET'])
+@admin_required
+def get_sources():
+    """获取所有来源"""
+    try:
+        sources = Source.get_all()
+        return jsonify({"success": True, "sources": sources})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/sources', methods=['POST'])
+@admin_required
+def add_source():
+    """添加来源"""
+    data = request.json
+    name = data.get('name', '').strip()
+    
+    if not name:
+        return jsonify({"success": False, "error": "来源名称不能为空"}), 400
+        
+    try:
+        Source.add(name)
+        return jsonify({"success": True, "message": "添加成功"})
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "error": "该来源已存在"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/sources/<int:source_id>', methods=['DELETE'])
+@admin_required
+def delete_source(source_id):
+    """删除来源"""
+    try:
+        Source.delete(source_id)
+        return jsonify({"success": True, "message": "删除成功"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

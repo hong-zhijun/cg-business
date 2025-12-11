@@ -24,38 +24,24 @@
     <body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- 标题栏 -->
-            <div
-                class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4"
-            >
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
-                    <h1
-                        class="text-2xl font-bold text-gray-900 flex items-center gap-2"
-                    >
-                        <svg
-                            class="w-8 h-8 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="2"
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                            />
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                         </svg>
                         Team 管理后台
                     </h1>
-                    <p class="text-gray-500 text-sm mt-1">
-                        高效管理您的团队与成员
-                    </p>
+                    <p class="text-gray-500 text-sm mt-1">高效管理您的团队与成员</p>
                 </div>
             </div>
 
             <!-- 顶部操作栏 -->
-            <div
-                class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6"
-            >
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
                 <div class="flex items-center justify-between gap-6">
                     <!-- 左侧按钮组 -->
                     <div class="flex items-center gap-3 flex-wrap">
@@ -63,20 +49,17 @@
                         <div class="flex items-center gap-2">
                             <button
                                 onclick="openKeysListModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group"
-                            >
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
                                 <svg
                                     class="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                                    />
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                                 </svg>
                                 邀请码管理
                             </button>
@@ -96,39 +79,33 @@
                         <div class="flex items-center gap-2">
                             <button
                                 onclick="openModal('adminInviteModal')"
-                                class="inline-flex items-center px-3 py-2 border border-emerald-200 shadow-sm text-sm font-medium rounded-lg text-emerald-700 bg-white hover:bg-emerald-50 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group"
-                            >
+                                class="inline-flex items-center px-3 py-2 border border-emerald-200 shadow-sm text-sm font-medium rounded-lg text-emerald-700 bg-white hover:bg-emerald-50 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
                                 <svg
                                     class="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-600"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                    />
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                                 邀请成员
                             </button>
                             <button
                                 onclick="openInvitationsModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group"
-                            >
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
                                 <svg
                                     class="w-4 h-4 mr-2 text-gray-400 group-hover:text-emerald-500"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 邀请记录
                             </button>
@@ -140,120 +117,97 @@
                         <div class="flex items-center gap-2">
                             <button
                                 onclick="openKickLogsModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group"
-                            >
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
                                 <svg
                                     class="w-4 h-4 mr-2 text-gray-400 group-hover:text-orange-500"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 踢人日志
                             </button>
                             <button
                                 onclick="openModal('manualKickModal')"
-                                class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all group"
-                            >
-                                <svg
-                                    class="w-4 h-4 mr-2 text-red-500 group-hover:text-red-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all group">
+                                <svg class="w-4 h-4 mr-2 text-red-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"
-                                    />
+                                        d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
                                 </svg>
                                 手动踢人
                             </button>
                             <button
                                 onclick="openModal('autoKickConfigModal')"
-                                class="inline-flex items-center px-3 py-2 border border-orange-200 shadow-sm text-sm font-medium rounded-lg text-orange-700 bg-white hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group"
-                            >
+                                class="inline-flex items-center px-3 py-2 border border-orange-200 shadow-sm text-sm font-medium rounded-lg text-orange-700 bg-white hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
                                 <svg
                                     class="w-4 h-4 mr-2 text-orange-500 group-hover:text-orange-600"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                                    />
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 自动踢人
+                            </button>
+
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+
+                            <button
+                                onclick="openSourcesModal()"
+                                class="inline-flex items-center px-3 py-2 border border-purple-200 shadow-sm text-sm font-medium rounded-lg text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all group">
+                                <svg
+                                    class="w-4 h-4 mr-2 text-purple-500 group-hover:text-purple-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                                编辑来源
                             </button>
                         </div>
                     </div>
 
                     <!-- 右侧成员统计 -->
                     <div
-                        class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
-                    >
-                        <svg
-                            class="w-4 h-4 text-blue-600"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
+                        onclick="openRankingModal()"
+                        class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                        title="点击查看来源排行榜">
+                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                             <path
-                                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
-                            />
+                                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                         </svg>
-                        <span class="text-sm text-gray-600 font-medium"
-                            >成员总数：</span
-                        >
-                        <span
-                            class="text-lg font-bold text-blue-700"
-                            id="totalMembersCount"
-                            >-</span
-                        >
+                        <span class="text-sm text-gray-600 font-medium">成员总数：</span>
+                        <span class="text-lg font-bold text-blue-700" id="totalMembersCount">-</span>
                     </div>
                 </div>
             </div>
 
             <!-- Teams 列表 -->
-            <div
-                class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6"
-            >
-                <div
-                    class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100"
-                >
-                    <h2
-                        class="text-xl font-bold text-gray-900 flex items-center"
-                    >
-                        <span
-                            class="bg-blue-50 text-blue-600 p-1.5 rounded-lg mr-3"
-                        >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-lg mr-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                ></path>
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
                         </span>
                         Teams 列表
@@ -268,38 +222,28 @@
                                     type="email"
                                     id="emailSearch"
                                     placeholder="搜索邮箱..."
-                                    class="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all w-64"
-                                />
+                                    class="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all w-64" />
                                 <svg
                                     class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
                                     fill="none"
                                     stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                    viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                             <button
                                 onclick="searchByEmail()"
-                                class="inline-flex items-center px-3 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
-                            >
-                                <svg
-                                    class="w-4 h-4 mr-1.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                class="inline-flex items-center px-3 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                                 搜索
                             </button>
@@ -307,20 +251,9 @@
                                 onclick="clearSearch()"
                                 id="clearSearchBtn"
                                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
-                                style="display: none"
-                            >
-                                <svg
-                                    class="w-4 h-4 mr-1.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
+                                style="display: none">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                                 清除
                             </button>
@@ -328,40 +261,22 @@
                         <div class="w-px h-8 bg-gray-200"></div>
                         <button
                             onclick="openModal('addTeamModal')"
-                            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
-                        >
-                            <svg
-                                class="w-4 h-4 mr-1.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 4v16m8-8H4"
-                                />
+                            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
                             添加 Team
                         </button>
                         <div class="w-px h-8 bg-gray-200 mx-1"></div>
                         <button
                             onclick="deleteExpiredTeams()"
-                            class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all"
-                        >
-                            <svg
-                                class="w-4 h-4 mr-1.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
+                            class="inline-flex items-center px-3 py-2 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                             清理过期
                         </button>
@@ -370,61 +285,36 @@
 
                 <div id="teamsList" class="overflow-x-auto">
                     <!-- 表格内容由 JS 生成 -->
-                    <p class="text-gray-500 text-sm italic text-center py-4">
-                        加载中...
-                    </p>
+                    <p class="text-gray-500 text-sm italic text-center py-4">加载中...</p>
                 </div>
             </div>
         </div>
 
         <!-- ================== Modals ================== -->
-        {% include 'modals/add_team.html' %} {% include
-        'modals/admin_invite.html' %} {% include 'modals/manual_kick.html' %} {%
-        include 'modals/auto_kick_config.html' %} {% include
-        'modals/members.html' %} {% include 'modals/team_details.html' %} {%
-        include 'modals/invite_member.html' %} {% include
-        'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {%
-        include 'modals/create_key.html' %} {% include 'modals/kick_logs.html'
-        %} {% include 'modals/invitations.html' %}
+        {% include 'modals/add_team.html' %} {% include 'modals/admin_invite.html' %} {% include 'modals/manual_kick.html' %} {% include
+        'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
+        'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
+        'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %} {% include 'modals/sources.html' %}
+        {% include 'modals/ranking.html' %}
 
         <div
             id="alertModal"
             class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
-            style="display: none"
-        >
-            <div
-                class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform"
-            >
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-gray-900">提示</h2>
-                    <button
-                        onclick="closeModal('alertModal')"
-                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            ></path>
+                    <button onclick="closeModal('alertModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
-                <div
-                    id="alertMessage"
-                    class="text-gray-700 whitespace-pre-line"
-                ></div>
+                <div id="alertMessage" class="text-gray-700 whitespace-pre-line"></div>
                 <div class="flex justify-end gap-3 mt-6">
                     <button
                         onclick="closeModal('alertModal')"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
-                    >
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
                         确定
                     </button>
                 </div>
@@ -434,47 +324,22 @@
         <div
             id="confirmModal"
             class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
-            style="display: none"
-        >
-            <div
-                class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform"
-            >
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-gray-900">确认</h2>
-                    <button
-                        id="confirmClose"
-                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            ></path>
+                    <button id="confirmClose" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
-                <div
-                    id="confirmMessage"
-                    class="text-gray-700 whitespace-pre-line"
-                ></div>
+                <div id="confirmMessage" class="text-gray-700 whitespace-pre-line"></div>
                 <div class="flex justify-end gap-3 mt-6">
-                    <button
-                        id="confirmCancel"
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
+                    <button id="confirmCancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                         取消
                     </button>
-                    <button
-                        id="confirmOk"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
-                    >
+                    <button id="confirmOk" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
                         确定
                     </button>
                 </div>
@@ -496,28 +361,18 @@
                 // But verify if these elements IDs are unique and present.
                 // The included HTML is injected into the body. So document.getElementById should find them.
 
-                const inviteTempCheckbox =
-                    document.getElementById("invite_is_temp");
+                const inviteTempCheckbox = document.getElementById("invite_is_temp");
                 if (inviteTempCheckbox) {
                     inviteTempCheckbox.addEventListener("change", function () {
-                        document.getElementById(
-                            "temp_hours_group"
-                        ).style.display = this.checked ? "block" : "none";
+                        document.getElementById("temp_hours_group").style.display = this.checked ? "block" : "none";
                     });
                 }
 
-                const adminInviteTempCheckbox = document.getElementById(
-                    "admin_invite_is_temp"
-                );
+                const adminInviteTempCheckbox = document.getElementById("admin_invite_is_temp");
                 if (adminInviteTempCheckbox) {
-                    adminInviteTempCheckbox.addEventListener(
-                        "change",
-                        function () {
-                            document.getElementById(
-                                "admin_temp_hours_group"
-                            ).style.display = this.checked ? "block" : "none";
-                        }
-                    );
+                    adminInviteTempCheckbox.addEventListener("change", function () {
+                        document.getElementById("admin_temp_hours_group").style.display = this.checked ? "block" : "none";
+                    });
                 }
             };
 
@@ -548,8 +403,7 @@
                         okBtn.removeEventListener("click", onOk);
                         cancelBtn.removeEventListener("click", onCancel);
                         modalEl.removeEventListener("click", onOverlay);
-                        if (closeBtn)
-                            closeBtn.removeEventListener("click", onCancel);
+                        if (closeBtn) closeBtn.removeEventListener("click", onCancel);
                     }
                     function onOk(e) {
                         e.stopPropagation();
@@ -609,32 +463,23 @@
             // 加载成员总数
             async function loadTotalMembersCount() {
                 try {
-                    const response = await fetch(
-                        "/api/admin/stats/total-members"
-                    );
+                    const response = await fetch("/api/admin/stats/total-members");
                     const data = await response.json();
 
                     if (data.success) {
-                        document.getElementById(
-                            "totalMembersCount"
-                        ).textContent = data.total_members;
+                        document.getElementById("totalMembersCount").textContent = data.total_members;
                     } else {
-                        document.getElementById(
-                            "totalMembersCount"
-                        ).textContent = "0";
+                        document.getElementById("totalMembersCount").textContent = "0";
                     }
                 } catch (error) {
                     console.error("加载成员总数失败:", error);
-                    document.getElementById("totalMembersCount").textContent =
-                        "0";
+                    document.getElementById("totalMembersCount").textContent = "0";
                 }
             }
 
             // 邮箱搜索功能
             async function searchByEmail() {
-                const email = document
-                    .getElementById("emailSearch")
-                    .value.trim();
+                const email = document.getElementById("emailSearch").value.trim();
 
                 if (!email) {
                     alert("请输入邮箱");
@@ -642,11 +487,7 @@
                 }
 
                 try {
-                    const response = await fetch(
-                        `/api/admin/teams/search?email=${encodeURIComponent(
-                            email
-                        )}`
-                    );
+                    const response = await fetch(`/api/admin/teams/search?email=${encodeURIComponent(email)}`);
                     const data = await response.json();
 
                     if (data.success) {
@@ -654,12 +495,9 @@
                             alert(data.message || `未找到包含 ${email} 的Team`);
                         } else {
                             displayTeams(data.teams);
-                            document.getElementById(
-                                "clearSearchBtn"
-                            ).style.display = "inline-flex";
+                            document.getElementById("clearSearchBtn").style.display = "inline-flex";
                             // 显示搜索结果提示
-                            const container =
-                                document.getElementById("teamsList");
+                            const container = document.getElementById("teamsList");
                             const tip = `<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
                                 <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -680,8 +518,7 @@
             // 清除搜索，恢复全部列表
             function clearSearch() {
                 document.getElementById("emailSearch").value = "";
-                document.getElementById("clearSearchBtn").style.display =
-                    "none";
+                document.getElementById("clearSearchBtn").style.display = "none";
                 displayTeams(allTeamsData);
             }
 
@@ -701,8 +538,7 @@
                 const container = document.getElementById("teamsList");
 
                 if (teams.length === 0) {
-                    container.innerHTML =
-                        '<p class="text-gray-500 text-sm italic text-center py-4">暂无 Team</p>';
+                    container.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-4">暂无 Team</p>';
                     return;
                 }
 
@@ -740,58 +576,37 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500">
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">${
-                                team.member_count
-                            }/4</span>
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">${team.member_count}/4</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 max-w-xs truncate" title="${
-                            team.email
-                        }">${team.email || "-"}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(
-                            team.active_until
-                        )}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 max-w-xs truncate" title="${team.email}">${team.email || "-"}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(team.active_until)}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-sm w-48">
-                            <button onclick="editTeamNote(${
-                                team.id
-                            }, '${team.name.replace(/'/g, "\\'")}',${`'${(
-                        team.note || ""
-                    )
+                            <button onclick="editTeamNote(${team.id}, '${team.name.replace(/'/g, "\\'")}',${`'${(team.note || "")
                         .replace(/'/g, "\\'")
-                        .replace(
-                            /\n/g,
-                            "\\n"
-                        )}'`})" class="text-gray-600 hover:text-blue-600 flex items-center truncate w-full text-left" title="${
+                        .replace(/\n/g, "\\n")}'`})" class="text-gray-600 hover:text-blue-600 flex items-center truncate w-full text-left" title="${
                         team.note || "点击添加备注"
                     }">
                                 <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                <span class="truncate max-w-[140px]">${
-                                    team.note || "添加备注"
-                                }</span>
+                                <span class="truncate max-w-[140px]">${team.note || "添加备注"}</span>
                             </button>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center gap-2">
-                                <button onclick="openInviteModal(${
-                                    team.id
-                                }, '${team.name.replace(/'/g, "\\'")}')"
+                                <button onclick="openInviteModal(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
                                     class="text-green-600 hover:text-green-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                                     邀请
                                 </button>
                                 <span class="text-gray-300">|</span>
-                                <button onclick="generateTeamKey(${
-                                    team.id
-                                }, '${team.name.replace(/'/g, "\\'")}')"
+                                <button onclick="generateTeamKey(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
                                     class="text-indigo-600 hover:text-indigo-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                                     邀请码
                                 </button>
                                 <span class="text-gray-300">|</span>
-                                <button onclick="showMembers(${team.id}, '${
-                        team.name
-                    }')" class="text-blue-600 hover:text-blue-900 flex items-center">
+                                <button onclick="showMembers(${team.id}, '${team.name}')" class="text-blue-600 hover:text-blue-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                                     成员
                                 </button>
@@ -824,29 +639,19 @@
             }
 
             async function deleteExpiredTeams() {
-                if (
-                    !(await showConfirm(
-                        "确定要删除所有Token已过期的Team吗？\n\n此操作不可恢复！"
-                    ))
-                )
-                    return;
+                if (!(await showConfirm("确定要删除所有Token已过期的Team吗？\n\n此操作不可恢复！"))) return;
 
                 try {
-                    const response = await fetch(
-                        "/api/admin/teams/delete-expired",
-                        {
-                            method: "POST",
-                        }
-                    );
+                    const response = await fetch("/api/admin/teams/delete-expired", {
+                        method: "POST",
+                    });
 
                     const data = await response.json();
 
                     if (data.success) {
                         if (data.deleted_count > 0) {
                             const teamList = data.deleted_teams.join("\n- ");
-                            alert(
-                                `✅ ${data.message}\n\n已删除的Team：\n- ${teamList}`
-                            );
+                            alert(`✅ ${data.message}\n\n已删除的Team：\n- ${teamList}`);
                         } else {
                             alert("✅ " + data.message);
                         }
@@ -910,16 +715,13 @@
                     modal.remove();
 
                     try {
-                        const response = await fetch(
-                            `/api/admin/teams/${teamId}/note`,
-                            {
-                                method: "PUT",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({ note: note }),
-                            }
-                        );
+                        const response = await fetch(`/api/admin/teams/${teamId}/note`, {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ note: note }),
+                        });
 
                         const data = await response.json();
 
@@ -944,11 +746,23 @@
                             <h3 class="text-lg font-bold text-gray-900 mb-4">生成专属邀请码</h3>
                             <div class="mb-4">
                                 <p class="text-gray-700 mb-3">为 <span class="font-semibold text-blue-600">${teamName}</span> 生成邀请码</p>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">选择类型</label>
-                                <select id="keyTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="permanent">永久邀请码</option>
-                                    <option value="temp">1日试用邀请码</option>
-                                </select>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">选择类型</label>
+                                        <select id="keyTypeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="permanent">永久邀请码</option>
+                                            <option value="temp">1日试用邀请码</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">生成数量</label>
+                                        <select id="keyCountSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="1">1个</option>
+                                            <option value="2">2个</option>
+                                            <option value="3">3个</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div class="flex justify-end gap-3">
                                 <button id="cancelKeyBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
@@ -963,6 +777,7 @@
 
                 const modal = document.getElementById("teamKeyModal");
                 const select = document.getElementById("keyTypeSelect");
+                const countSelect = document.getElementById("keyCountSelect");
                 const cancelBtn = document.getElementById("cancelKeyBtn");
                 const confirmBtn = document.getElementById("confirmKeyBtn");
 
@@ -981,6 +796,7 @@
                 // 生成按钮
                 confirmBtn.onclick = async () => {
                     const isTemp = select.value === "temp";
+                    const count = parseInt(countSelect.value);
                     modal.remove();
 
                     try {
@@ -993,25 +809,25 @@
                                 team_id: teamId,
                                 is_temp: isTemp,
                                 temp_hours: isTemp ? 24 : 0,
-                                count: 1,
+                                count: count,
                             }),
                         });
 
                         const data = await response.json();
 
                         if (data.success && data.keys && data.keys.length > 0) {
-                            const keyCode = data.keys[0].key_code;
-                            await navigator.clipboard.writeText(keyCode);
-                            alert(
-                                `✅ 已为 "${teamName}" 生成${
-                                    isTemp ? "1日试用" : "永久"
-                                }邀请码！\n\n邀请码已复制到剪贴板：\n${keyCode}`
-                            );
+                            const keyCodes = data.keys.map((k) => k.key_code);
+
+                            // 格式化剪贴板内容
+                            let clipboardText = `${teamName}\n`;
+                            keyCodes.forEach((code, index) => {
+                                clipboardText += `${code}\n`;
+                            });
+
+                            await navigator.clipboard.writeText(clipboardText);
+                            alert(`✅ 已为 "${teamName}" 生成 ${count} 个${isTemp ? "1日试用" : "永久"}邀请码！\n\n邀请码已按格式复制到剪贴板。`);
                             // 如果邀请码列表已加载，刷新它
-                            if (
-                                typeof keysLoaded !== "undefined" &&
-                                keysLoaded
-                            ) {
+                            if (typeof keysLoaded !== "undefined" && keysLoaded) {
                                 loadKeys();
                             }
                         } else {
@@ -1028,6 +844,16 @@
                     event.target.style.display = "none";
                 }
             };
+
+            // 来源管理弹窗控制
+            function openSourcesModal() {
+                document.getElementById("sourcesModal").style.display = "block";
+                loadSources();
+            }
+
+            function closeSourcesModal() {
+                document.getElementById("sourcesModal").style.display = "none";
+            }
         </script>
     </body>
 </html>
