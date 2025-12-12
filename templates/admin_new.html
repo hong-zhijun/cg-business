@@ -600,6 +600,13 @@
                                     邀请
                                 </button>
                                 <span class="text-gray-300">|</span>
+                                <button onclick="toggleTeamPublic(${team.id}, ${!team.is_public})" class="${
+                        team.is_public ? "text-blue-600 hover:text-blue-900" : "text-gray-400 hover:text-gray-600"
+                    } flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    ${team.is_public ? "公开" : "私有"}
+                                </button>
+                                <span class="text-gray-300">|</span>
                                 <button onclick="generateTeamKey(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
                                     class="text-indigo-600 hover:text-indigo-900 flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
@@ -635,6 +642,26 @@
                     return date.toLocaleString("zh-CN");
                 } catch (e) {
                     return "Invalid Date";
+                }
+            }
+
+            async function toggleTeamPublic(teamId, isPublic) {
+                try {
+                    const response = await fetch(`/api/admin/teams/${teamId}/public`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ is_public: isPublic }),
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        loadTeams();
+                    } else {
+                        alert("更新失败: " + data.error);
+                        loadTeams();
+                    }
+                } catch (e) {
+                    alert("更新失败: " + e);
+                    loadTeams();
                 }
             }
 

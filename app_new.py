@@ -613,6 +613,20 @@ def update_team_note(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/<int:team_id>/public', methods=['PUT'])
+@admin_required
+def update_team_public_status(team_id):
+    """更新 Team 的公开状态"""
+    data = request.json
+    is_public = data.get('is_public', False)
+    
+    try:
+        Team.update_team_info(team_id, is_public=is_public)
+        return jsonify({"success": True, "message": "状态更新成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams/search', methods=['GET'])
 @admin_required
 def search_teams_by_email():
@@ -1642,6 +1656,243 @@ def delete_source(source_id):
 
 
 
+
+
+# ==================== 公开 Team 页面路由 ====================
+
+@app.route('/team')
+def public_teams_page():
+    """公开 Team 页面"""
+    return render_template('public_teams.html')
+
+
+@app.route('/api/public/teams', methods=['POST'])
+def get_public_teams():
+    """获取公开的 Team 列表 (需密码验证)"""
+    data = request.json
+    password = data.get('password', '')
+
+    if password != '123abc':
+        return jsonify({"success": False, "error": "密码错误"}), 403
+
+    try:
+        # 获取所有 Team
+        all_teams = Team.get_all()
+        # 筛选 is_public=True 的 Team
+        public_teams = [t for t in all_teams if t.get('is_public')]
+
+        return jsonify({"success": True, "teams": public_teams})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/public/teams/<int:team_id>/invite', methods=['POST'])
+def public_invite_member(team_id):
+    """公开页面邀请成员 (需密码验证)"""
+    data = request.json
+    password = data.get('password', '')
+    email = data.get('email', '').strip()
+
+    if password != '123abc':
+        return jsonify({"success": False, "error": "密码错误"}), 403
+
+    if not email:
+        return jsonify({"success": False, "error": "请输入邮箱"}), 400
+
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+        
+    if not team.get('is_public'):
+        return jsonify({"success": False, "error": "该 Team 未公开"}), 403
+
+    # 检查 Team 人数是否已满 (检查邀请记录数)
+    invited_emails = Invitation.get_all_emails_by_team(team_id)
+    if len(invited_emails) >= 4:
+        return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+
+    # 检查该邮箱是否已被成功邀请
+    if email in invited_emails:
+        return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+
+    # 如果之前有失败记录，先删除（允许重新邀请）
+    Invitation.delete_by_email(team_id, email)
+
+    # 执行邀请
+    result = invite_to_team(team['access_token'], team['account_id'], email, team_id)
+
+    if result['success']:
+        # 记录邀请
+        Invitation.create(
+            team_id=team_id,
+            email=email,
+            invite_id=result.get('invite_id'),
+            status='success',
+            is_temp=False, # 公开页面邀请默认为永久
+            temp_expire_at=None
+        )
+
+        # 更新team的最后邀请时间
+        Team.update_last_invite(team_id)
+
+        return jsonify({
+            "success": True,
+            "message": f"已成功邀请 {email}",
+            "invite_id": result.get('invite_id')
+        })
+    else:
+        # 邀请 API 返回失败，验证是否实际成功
+        import time
+        time.sleep(2)  # 等待 API 同步
+        
+        # 1. 检查是否在 pending 列表中
+        pending_result = get_pending_invites(team['access_token'], team['account_id'])
+        if pending_result['success']:
+            pending_emails = [inv.get('email_address', '').lower() for inv in pending_result.get('invites', [])]
+            if email.lower() in pending_emails:
+                # 实际已成功
+                Invitation.delete_by_email(team_id, email)
+                Invitation.create(
+                    team_id=team_id,
+                    email=email,
+                    status='success',
+                    is_temp=False,
+                    temp_expire_at=None
+                )
+                Team.update_last_invite(team_id)
+                
+                return jsonify({
+                    "success": True,
+                    "message": f"已成功邀请 {email}（验证确认）",
+                    "verified": True
+                })
+        
+        # 2. 检查是否已在成员列表中
+        members_result = get_team_members(team['access_token'], team['account_id'], team_id)
+        if members_result['success']:
+            member_emails = [m.get('email', '').lower() for m in members_result.get('members', [])]
+            if email.lower() in member_emails:
+                # 已经是成员了
+                Invitation.delete_by_email(team_id, email)
+                Invitation.create(
+                    team_id=team_id,
+                    email=email,
+                    status='success',
+                    is_temp=False,
+                    temp_expire_at=None
+                )
+                Team.update_last_invite(team_id)
+                
+                return jsonify({
+                    "success": True,
+                    "message": f"{email} 已是团队成员",
+                    "already_member": True
+                })
+        
+        # 3. 确实失败
+        Invitation.create(
+            team_id=team_id,
+            email=email,
+            status='failed'
+        )
+        return jsonify({
+            "success": False,
+            "error": f"邀请失败: {result.get('error', '未知错误')}"
+        }), 500
+
+
+@app.route('/api/public/teams/<int:team_id>/members', methods=['POST'])
+def public_get_members(team_id):
+    """公开页面查看成员 (需密码验证) - 优先从数据库读取"""
+    data = request.json
+    password = data.get('password', '')
+
+    if password != '123abc':
+        return jsonify({"success": False, "error": "密码错误"}), 403
+
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+        
+    if not team.get('is_public'):
+        return jsonify({"success": False, "error": "该 Team 未公开"}), 403
+
+    # 从 member_notes 表中读取成员列表
+    db_members = MemberNote.get_all(team_id)
+    
+    # 格式化输出
+    safe_members = []
+    for m in db_members:
+        safe_members.append({
+            'email': m.get('email'),
+            'role': m.get('role'),
+            'created': m.get('join_time') # 使用 join_time
+        })
+        
+    return jsonify({"success": True, "members": safe_members})
+
+
+@app.route('/api/public/teams/<int:team_id>/members/refresh', methods=['POST'])
+def public_refresh_members(team_id):
+    """公开页面刷新成员 (需密码验证)"""
+    data = request.json
+    password = data.get('password', '')
+
+    if password != '123abc':
+        return jsonify({"success": False, "error": "密码错误"}), 403
+
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+        
+    if not team.get('is_public'):
+        return jsonify({"success": False, "error": "该 Team 未公开"}), 403
+
+    # 调用 admin 中的刷新逻辑 (复用逻辑，避免代码重复)
+    # 这里直接调用内部函数或者复用 refresh_members 的逻辑
+    # 由于 refresh_members 是路由函数，我们最好提取公共逻辑，或者在这里重新实现一遍
+    
+    result = get_team_members(team['access_token'], team['account_id'], team_id)
+
+    if result['success']:
+        members = result.get('members', [])
+        
+        # 更新数据库中的成员数量
+        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        Team.update_member_count(team_id, len(non_owner_members))
+
+        # 同步每个成员到 member_notes
+        current_user_ids = []
+        for member in members:
+            user_id = member.get('id')
+            if not user_id:
+                continue
+            
+            current_user_ids.append(user_id)
+            
+            email = member.get('email')
+            role = member.get('role')
+            created_time_str = member.get('created_time')
+            join_time = None
+            if created_time_str:
+                try:
+                    if created_time_str.endswith('Z'):
+                        created_time_str = created_time_str.replace('Z', '+00:00')
+                    dt = datetime.fromisoformat(created_time_str)
+                    join_time = int(dt.timestamp())
+                except Exception as e:
+                    join_time = member.get('created')
+            else:
+                 join_time = member.get('created')
+
+            MemberNote.sync_member(team_id, user_id, email, role, join_time)
+            
+        # 删除不在当前列表中的成员
+        MemberNote.delete_not_in(team_id, current_user_ids)
+            
+        return jsonify({"success": True, "message": "成员列表已刷新"})
+    else:
+        return jsonify(result), result.get('status_code', 500)
 
 
 @app.route('/health')

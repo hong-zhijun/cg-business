@@ -103,6 +103,11 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # 字段已存在
 
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN is_public BOOLEAN DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
         # Access Keys 表 (重构: 每个邀请码对应一个 Team)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS access_keys (
@@ -242,15 +247,15 @@ def init_db():
 
 class Team:
     @staticmethod
-    def create(name, account_id, access_token, organization_id=None, email=None):
+    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False):
         """创建新 Team（不自动生成密钥,需要手动生成）"""
         with get_db() as conn:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO teams (name, account_id, access_token, organization_id, email)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (name, account_id, access_token, organization_id, email))
+                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (name, account_id, access_token, organization_id, email, is_public))
             team_id = cursor.lastrowid
 
             return team_id
@@ -296,7 +301,7 @@ class Team:
             ''', (access_token, team_id))
 
     @staticmethod
-    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None):
+    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None):
         """更新 Team 的完整信息"""
         with get_db() as conn:
             cursor = conn.cursor()
@@ -316,6 +321,9 @@ class Team:
             if email is not None:
                 updates.append('email = ?')
                 params.append(email)
+            if is_public is not None:
+                updates.append('is_public = ?')
+                params.append(is_public)
 
             if updates:
                 updates.append('updated_at = CURRENT_TIMESTAMP')

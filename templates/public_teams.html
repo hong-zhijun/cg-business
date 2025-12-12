@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Team 列表</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 min-h-screen">
+        <!-- 全屏密码遮罩 -->
+        <div id="passwordOverlay" class="fixed inset-0 z-50 bg-gray-900 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">访问验证</h2>
+                    <p class="text-gray-500 mt-2">请输入访问密码以继续</p>
+                </div>
+                <form id="passwordForm" onsubmit="verifyPassword(event)" class="space-y-4">
+                    <div>
+                        <input
+                            type="password"
+                            id="accessPassword"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg tracking-widest"
+                            placeholder="请输入密码"
+                            required />
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-lg">
+                        确认进入
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主内容区 (默认隐藏) -->
+        <div id="mainContent" class="hidden container mx-auto px-4 py-8">
+            <header class="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
+                    <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
+                </div>
+                <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-600 transition-colors">退出访问</button>
+            </header>
+
+            <!-- Team 列表容器 -->
+            <div id="teamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 动态加载内容 -->
+                <div class="col-span-full text-center py-12 text-gray-500">正在加载数据...</div>
+            </div>
+        </div>
+
+        <!-- 邀请模态框 -->
+        <div id="inviteModal" class="fixed inset-0 z-40 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4" id="inviteModalTitle">邀请成员</h3>
+                    <input type="hidden" id="inviteTeamId" />
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">被邀请人邮箱</label>
+                        <input
+                            type="email"
+                            id="inviteEmail"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="name@example.com" />
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="closeModal('inviteModal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                        <button onclick="submitInvite()" id="btnInviteSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            发送邀请
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 成员列表模态框 -->
+        <div id="membersModal" class="fixed inset-0 z-40 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all flex flex-col max-h-[80vh]">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900" id="membersModalTitle">Team 成员</h3>
+                    <div class="flex items-center gap-3">
+                        <button
+                            onclick="refreshMembers()"
+                            id="refreshMembersBtn"
+                            class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            刷新
+                        </button>
+                        <button onclick="closeModal('membersModal')" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-0 overflow-y-auto flex-1 bg-gray-50">
+                    <input type="hidden" id="currentTeamId" />
+                    <div id="membersListBody" class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- 动态加载 -->
+                    </div>
+                    <div id="membersLoading" class="text-center py-8 text-gray-500 hidden">加载中...</div>
+                </div>
+                <div class="p-4 border-t border-gray-100 bg-gray-50 text-right">
+                    <button
+                        onclick="closeModal('membersModal')"
+                        class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // 页面加载时检查是否有保存的密码
+            document.addEventListener("DOMContentLoaded", () => {
+                const savedPwd = sessionStorage.getItem("team_access_pwd");
+                if (savedPwd) {
+                    document.getElementById("accessPassword").value = savedPwd;
+                    verifyPassword(new Event("submit"));
+                }
+            });
+
+            let currentPassword = "";
+
+            async function verifyPassword(e) {
+                e.preventDefault();
+                const pwd = document.getElementById("accessPassword").value;
+                const btn = e.target.querySelector("button");
+                const originalText = btn ? btn.innerText : "";
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = "验证中...";
+                }
+
+                try {
+                    const response = await fetch("/api/public/teams", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: pwd }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        currentPassword = pwd;
+                        sessionStorage.setItem("team_access_pwd", pwd);
+                        document.getElementById("passwordOverlay").classList.add("hidden");
+                        document.getElementById("mainContent").classList.remove("hidden");
+                        renderTeams(data.teams);
+                    } else {
+                        alert("验证失败: " + (data.error || "密码错误"));
+                        sessionStorage.removeItem("team_access_pwd");
+                    }
+                } catch (err) {
+                    alert("请求失败，请重试");
+                    console.error(err);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                    }
+                }
+            }
+
+            function logout() {
+                sessionStorage.removeItem("team_access_pwd");
+                location.reload();
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return "无限制";
+                const date = new Date(dateStr);
+                return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+
+            function renderTeams(teams) {
+                const container = document.getElementById("teamsGrid");
+                if (teams.length === 0) {
+                    container.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <p class="text-lg font-medium">暂无公开的 Team</p>
+                    </div>
+                `;
+                    return;
+                }
+
+                container.innerHTML = teams
+                    .map((team) => {
+                        const isFull = team.member_count >= 4;
+                        const progressColor = isFull ? "bg-red-500" : team.member_count >= 3 ? "bg-yellow-500" : "bg-green-500";
+                        const percent = (team.member_count / 4) * 100;
+
+                        return `
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden flex flex-col">
+                    <div class="p-5 flex-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 truncate pr-2" title="${team.name}">${team.name}</h3>
+                                <p class="text-xs text-gray-500 mt-1 truncate max-w-[200px]" title="${team.email || ""}">${
+                            team.email || "未设置邮箱"
+                        }</p>
+                            </div>
+                            <span class="px-2 py-1 ${
+                                isFull ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                            } text-xs font-medium rounded-full whitespace-nowrap">
+                                ${isFull ? "已满员" : "可加入"}
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- 成员进度 -->
+                            <div>
+                                <div class="flex justify-between text-xs text-gray-600 mb-1">
+                                    <span>成员数量</span>
+                                    <span class="font-medium">${team.member_count} / 4</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-2">
+                                    <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- 到期时间 -->
+                            <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span class="truncate">到期: ${formatDate(team.active_until)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-5 py-3 border-t border-gray-100 grid grid-cols-2 gap-3">
+                        <button onclick="openInviteModal(${team.id}, '${team.name}')" 
+                            class="flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors ${
+                                isFull ? "opacity-50 cursor-not-allowed" : ""
+                            }"
+                            ${isFull ? "disabled" : ""}>
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            邀请
+                        </button>
+                        <button onclick="openMembersModal(${team.id}, '${team.name}')"
+                            class="flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            查看成员
+                        </button>
+                    </div>
+                </div>
+                `;
+                    })
+                    .join("");
+            }
+
+            // 模态框操作
+            function openModal(id) {
+                document.getElementById(id).classList.remove("hidden");
+            }
+            function closeModal(id) {
+                document.getElementById(id).classList.add("hidden");
+            }
+
+            // 邀请相关
+            function openInviteModal(teamId, teamName) {
+                document.getElementById("inviteTeamId").value = teamId;
+                document.getElementById("inviteModalTitle").innerText = `邀请加入 - ${teamName}`;
+                document.getElementById("inviteEmail").value = "";
+                openModal("inviteModal");
+            }
+
+            async function submitInvite() {
+                const teamId = document.getElementById("inviteTeamId").value;
+                const email = document.getElementById("inviteEmail").value;
+                const btn = document.getElementById("btnInviteSubmit");
+
+                if (!email) {
+                    alert("请输入邮箱");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerText = "发送中...";
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/invite`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            password: currentPassword,
+                            email: email,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert("邀请成功！");
+                        closeModal("inviteModal");
+                        // 刷新列表以更新人数
+                        verifyPassword(new Event("submit"));
+                    } else {
+                        alert("邀请失败: " + data.error);
+                    }
+                } catch (err) {
+                    alert("请求出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "发送邀请";
+                }
+            }
+
+            // 查看成员相关
+            async function openMembersModal(teamId, teamName) {
+                document.getElementById("membersModalTitle").innerText = `${teamName} - 成员列表`;
+                document.getElementById("currentTeamId").value = teamId;
+                const tbody = document.getElementById("membersListBody");
+                const loading = document.getElementById("membersLoading");
+
+                tbody.innerHTML = "";
+                loading.classList.remove("hidden");
+                openModal("membersModal");
+
+                await loadMembers(teamId);
+            }
+
+            async function loadMembers(teamId) {
+                const tbody = document.getElementById("membersListBody");
+                const loading = document.getElementById("membersLoading");
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/members`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: currentPassword }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (data.members.length === 0) {
+                            tbody.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">暂无成员</div>';
+                        } else {
+                            tbody.innerHTML = data.members
+                                .map(
+                                    (m) => `
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-2">
+                                <div class="flex justify-between items-start">
+                                    <div class="font-medium text-gray-900 truncate pr-2 w-full" title="${m.email}">${m.email}</div>
+                                </div>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        m.role === "account-owner" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"
+                                    }">
+                                        ${m.role === "account-owner" ? "所有者" : "成员"}
+                                    </span>
+                                    <span class="text-xs text-gray-400">
+                                        ${m.created ? new Date(m.created * 1000).toLocaleDateString() : "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        `
+                                )
+                                .join("");
+                        }
+                    } else {
+                        alert("获取成员失败: " + data.error);
+                    }
+                } catch (err) {
+                    alert("请求出错");
+                } finally {
+                    loading.classList.add("hidden");
+                }
+            }
+
+            async function refreshMembers() {
+                const teamId = document.getElementById("currentTeamId").value;
+                if (!teamId) return;
+
+                const btn = document.getElementById("refreshMembersBtn");
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="animate-spin mr-1">↻</span> 刷新中...';
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/members/refresh`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: currentPassword }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        await loadMembers(teamId);
+                        // 同时也刷新一下team列表（因为人数可能变了）
+                        verifyPassword(new Event("submit"));
+                    } else {
+                        alert("刷新失败: " + data.error);
+                    }
+                } catch (err) {
+                    alert("刷新请求出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+        </script>
+    </body>
+</html>
