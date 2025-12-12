@@ -39,19 +39,27 @@
         </div>
 
         <!-- 主内容区 (默认隐藏) -->
-    <div id="mainContent" class="hidden container mx-auto px-4 py-8">
-        <header class="mb-8 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
-                <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
-            </div>
-            <button onclick="openRankingModal()" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                排行榜
-            </button>
-        </header>
+        <div id="mainContent" class="hidden container mx-auto px-4 py-8">
+            <header class="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
+                    <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
+                </div>
+                <button
+                    onclick="openRankingModal()"
+                    class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    排行榜
+                </button>
+            </header>
 
-        <!-- Team 列表容器 -->
+            <!-- Team 列表容器 -->
             <div id="teamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 动态加载内容 -->
                 <div class="col-span-full text-center py-12 text-gray-500">正在加载数据...</div>
@@ -127,10 +135,44 @@
 
         {% include 'modals/ranking.html' %}
 
-    <script>
-        // 页面加载时检查是否有保存的密码
+        <script>
+            // 封装带过期时间的 localStorage
+            const Storage = {
+                set: function (key, value, days) {
+                    const now = new Date();
+                    const item = {
+                        value: value,
+                        expiry: now.getTime() + days * 24 * 60 * 60 * 1000,
+                    };
+                    localStorage.setItem(key, JSON.stringify(item));
+                },
+                get: function (key) {
+                    const itemStr = localStorage.getItem(key);
+                    if (!itemStr) return null;
+
+                    try {
+                        const item = JSON.parse(itemStr);
+                        const now = new Date();
+
+                        if (now.getTime() > item.expiry) {
+                            localStorage.removeItem(key);
+                            return null;
+                        }
+                        return item.value;
+                    } catch (e) {
+                        // 如果解析失败（兼容旧数据），清除并返回null
+                        localStorage.removeItem(key);
+                        return null;
+                    }
+                },
+                remove: function (key) {
+                    localStorage.removeItem(key);
+                },
+            };
+
+            // 页面加载时检查是否有保存的密码
             document.addEventListener("DOMContentLoaded", () => {
-                const savedPwd = sessionStorage.getItem("team_access_pwd");
+                const savedPwd = Storage.get("team_access_pwd");
                 if (savedPwd) {
                     document.getElementById("accessPassword").value = savedPwd;
                     verifyPassword(new Event("submit"));
@@ -161,13 +203,14 @@
 
                     if (data.success) {
                         currentPassword = pwd;
-                        sessionStorage.setItem("team_access_pwd", pwd);
+                        // 保存密码，设置7天过期
+                        Storage.set("team_access_pwd", pwd, 7);
                         document.getElementById("passwordOverlay").classList.add("hidden");
                         document.getElementById("mainContent").classList.remove("hidden");
                         renderTeams(data.teams);
                     } else {
                         alert("验证失败: " + (data.error || "密码错误"));
-                        sessionStorage.removeItem("team_access_pwd");
+                        Storage.remove("team_access_pwd");
                     }
                 } catch (err) {
                     alert("请求失败，请重试");
@@ -181,7 +224,7 @@
             }
 
             function logout() {
-                sessionStorage.removeItem("team_access_pwd");
+                Storage.remove("team_access_pwd");
                 location.reload();
             }
 
