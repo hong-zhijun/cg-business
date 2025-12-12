@@ -135,11 +135,18 @@ def init_db():
                 is_temp BOOLEAN DEFAULT 0,
                 temp_expire_at TIMESTAMP,
                 is_confirmed BOOLEAN DEFAULT 0,
+                source TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
                 FOREIGN KEY (key_id) REFERENCES access_keys (id) ON DELETE SET NULL
             )
         ''')
+
+        # 为 invitations 表自动补全字段（如果不存在）
+        try:
+            cursor.execute('ALTER TABLE invitations ADD COLUMN source TEXT')
+        except sqlite3.OperationalError:
+            pass
 
         # 自动检测配置表
         cursor.execute('''
@@ -220,9 +227,25 @@ def init_db():
             CREATE TABLE IF NOT EXISTS sources (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
+                username TEXT UNIQUE,
+                password TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # 为 sources 表自动补全字段
+        try:
+            cursor.execute('ALTER TABLE sources ADD COLUMN username TEXT')
+        except sqlite3.OperationalError:
+            pass
+        
+        try:
+            cursor.execute('ALTER TABLE sources ADD COLUMN password TEXT')
+        except sqlite3.OperationalError:
+            pass
+
+        # 创建索引
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_sources_username ON sources(username)")
 
 
         # 登录失败记录表 (fail2ban)
@@ -744,15 +767,15 @@ class AccessKey:
 class Invitation:
     @staticmethod
     def create(team_id, email, key_id=None, user_id=None, invite_id=None,
-               status='pending', is_temp=False, temp_expire_at=None):
+               status='pending', is_temp=False, temp_expire_at=None, source=None):
         """创建邀请记录"""
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO invitations (team_id, key_id, email, user_id, invite_id,
-                                        status, is_temp, temp_expire_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (team_id, key_id, email, user_id, invite_id, status, is_temp, temp_expire_at))
+                                        status, is_temp, temp_expire_at, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (team_id, key_id, email, user_id, invite_id, status, is_temp, temp_expire_at, source))
             return cursor.lastrowid
 
     @staticmethod
@@ -997,16 +1020,38 @@ class MemberNote:
 
     @staticmethod
     def sync_member(team_id, user_id, email, role, join_time):
-        """同步成员基本信息 (不覆盖 note 和 source)"""
+        """同步成员基本信息 (不覆盖 note 和 source，但如果 source 为空则尝试自动填充)"""
         def _exec():
             with get_db() as conn:
                 cursor = conn.cursor()
+                # 1. 同步基本信息
                 cursor.execute('''
                     INSERT INTO member_notes (team_id, user_id, email, role, join_time, updated_at)
                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(team_id, user_id)
                     DO UPDATE SET email = excluded.email, role = excluded.role, join_time = excluded.join_time, updated_at = CURRENT_TIMESTAMP
                 ''', (team_id, user_id, email, role, join_time))
+                
+                # 2. 检查是否需要自动填充 source
+                cursor.execute('SELECT source FROM member_notes WHERE team_id = ? AND user_id = ?', (team_id, user_id))
+                row = cursor.fetchone()
+                current_source = row[0] if row else None
+                
+                if not current_source and email:
+                    # 从 invitations 表查找 source
+                    cursor.execute('''
+                        SELECT source FROM invitations 
+                        WHERE team_id = ? AND LOWER(email) = LOWER(?) AND source IS NOT NULL
+                        ORDER BY created_at DESC LIMIT 1
+                    ''', (team_id, email))
+                    inv_row = cursor.fetchone()
+                    if inv_row and inv_row[0]:
+                        new_source = inv_row[0]
+                        cursor.execute('''
+                            UPDATE member_notes 
+                            SET source = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE team_id = ? AND user_id = ?
+                        ''', (new_source, team_id, user_id))
         return execute_with_retry(_exec)
 
     @staticmethod
@@ -1160,14 +1205,46 @@ class Source:
             return [dict(row) for row in cursor.fetchall()]
             
     @staticmethod
-    def add(name):
+    def add(name, username=None, password=None):
         """添加来源"""
         def _exec():
             with get_db() as conn:
                 cursor = conn.cursor()
-                cursor.execute('INSERT INTO sources (name) VALUES (?)', (name,))
+                # 如果没有提供 username，默认使用 name
+                if not username:
+                    actual_username = name
+                else:
+                    actual_username = username
+                    
+                # 如果没有提供 password，生成随机密码
+                if not password:
+                    actual_password = secrets.token_hex(3)
+                else:
+                    actual_password = password
+                    
+                cursor.execute('''
+                    INSERT INTO sources (name, username, password) 
+                    VALUES (?, ?, ?)
+                ''', (name, actual_username, actual_password))
                 return cursor.lastrowid
         return execute_with_retry(_exec)
+        
+    @staticmethod
+    def get_by_username(username):
+        """根据用户名获取来源"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM sources WHERE username = ?', (username,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    @staticmethod
+    def verify_user(username, password):
+        """验证用户名和密码"""
+        user = Source.get_by_username(username)
+        if user and user['password'] == password:
+            return user
+        return None
         
     @staticmethod
     def delete(source_id):

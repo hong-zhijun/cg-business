@@ -5,7 +5,7 @@
     style="display: none"
 >
     <div
-        class="relative top-20 mx-auto p-6 border w-96 shadow-2xl rounded-xl bg-white transition-all"
+        class="relative top-20 mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white transition-all"
     >
         <div
             class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100"
@@ -24,7 +24,7 @@
                         d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
                     />
                 </svg>
-                来源管理
+                来源账号管理
             </h2>
             <button
                 class="close cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
@@ -47,31 +47,65 @@
         </div>
 
         <!-- 添加来源表单 -->
-        <div class="mb-6 flex gap-2">
-            <input
-                type="text"
-                id="newSourceInput"
-                placeholder="输入新来源名称"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-            <button
-                onclick="addSource()"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
-            >
-                添加
-            </button>
+        <div class="mb-6 space-y-3 bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">添加新账号</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <input
+                    type="text"
+                    id="newSourceName"
+                    placeholder="来源名称 (如: 代理A)"
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <input
+                    type="text"
+                    id="newSourceUsername"
+                    placeholder="登录账号 (选填,默认同名称)"
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+            </div>
+            <div class="flex gap-3">
+                <input
+                    type="text"
+                    id="newSourcePassword"
+                    placeholder="登录密码 (选填,默认随机)"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <button
+                    onclick="addSource()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+                >
+                    添加
+                </button>
+            </div>
         </div>
 
         <!-- 来源列表 -->
-        <div id="sourcesList" class="space-y-2 max-h-96 overflow-y-auto">
-            <!-- 动态生成 -->
-            <p class="text-gray-500 text-sm text-center py-4">加载中...</p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-3 py-2">名称</th>
+                        <th scope="col" class="px-3 py-2">账号</th>
+                        <th scope="col" class="px-3 py-2">密码</th>
+                        <th scope="col" class="px-3 py-2 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="sourcesList">
+                    <!-- 动态生成 -->
+                </tbody>
+            </table>
+            <div id="sourcesLoading" class="text-center py-4 text-gray-400">加载中...</div>
         </div>
     </div>
 </div>
 
 <script>
     async function loadSources() {
+        const loading = document.getElementById("sourcesLoading");
+        const list = document.getElementById("sourcesList");
+        loading.style.display = "block";
+        list.innerHTML = "";
+
         try {
             const response = await fetch("/api/admin/sources");
             const data = await response.json();
@@ -83,6 +117,8 @@
             }
         } catch (error) {
             alert("请求失败: " + error.message);
+        } finally {
+            loading.style.display = "none";
         }
     }
 
@@ -90,46 +126,57 @@
         const container = document.getElementById("sourcesList");
         if (sources.length === 0) {
             container.innerHTML =
-                '<p class="text-gray-500 text-sm text-center py-4">暂无数据</p>';
+                '<tr><td colspan="4" class="text-center py-4">暂无数据</td></tr>';
             return;
         }
 
         let html = "";
         sources.forEach((source) => {
             html += `
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                <span class="text-gray-700 font-medium">${source.name}</span>
-                <button 
-                    onclick="deleteSource(${source.id})"
-                    class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
-                    title="删除"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
+            <tr class="bg-white border-b hover:bg-gray-50">
+                <td class="px-3 py-2 font-medium text-gray-900">${source.name}</td>
+                <td class="px-3 py-2">${source.username || '-'}</td>
+                <td class="px-3 py-2 font-mono text-gray-600 select-all">${source.password || '-'}</td>
+                <td class="px-3 py-2 text-right">
+                    <button 
+                        onclick="deleteSource(${source.id})"
+                        class="text-red-500 hover:text-red-700 font-medium text-xs hover:underline"
+                    >
+                        删除
+                    </button>
+                </td>
+            </tr>
         `;
         });
         container.innerHTML = html;
     }
 
     async function addSource() {
-        const input = document.getElementById("newSourceInput");
-        const name = input.value.trim();
+        const nameInput = document.getElementById("newSourceName");
+        const usernameInput = document.getElementById("newSourceUsername");
+        const passwordInput = document.getElementById("newSourcePassword");
+        
+        const name = nameInput.value.trim();
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
 
-        if (!name) return;
+        if (!name) {
+            alert("请输入来源名称");
+            return;
+        }
 
         try {
             const response = await fetch("/api/admin/sources", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name, username, password }),
             });
             const data = await response.json();
 
             if (data.success) {
-                input.value = "";
+                nameInput.value = "";
+                usernameInput.value = "";
+                passwordInput.value = "";
                 loadSources(); // 刷新列表
             } else {
                 alert("添加失败: " + data.error);

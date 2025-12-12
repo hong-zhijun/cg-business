@@ -18,15 +18,23 @@
             <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">访问验证</h2>
-                    <p class="text-gray-500 mt-2">请输入访问密码以继续</p>
+                    <p class="text-gray-500 mt-2">请输入您的账号和密码</p>
                 </div>
-                <form id="passwordForm" onsubmit="verifyPassword(event)" class="space-y-4">
+                <form id="passwordForm" onsubmit="verifyLogin(event)" class="space-y-4">
+                    <div>
+                        <input
+                            type="text"
+                            id="accessUsername"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-lg"
+                            placeholder="账号"
+                            required />
+                    </div>
                     <div>
                         <input
                             type="password"
                             id="accessPassword"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg tracking-widest"
-                            placeholder="请输入密码"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-lg"
+                            placeholder="密码"
                             required />
                     </div>
                     <button
@@ -188,19 +196,20 @@
 
             // 页面加载时检查是否有保存的密码
             document.addEventListener("DOMContentLoaded", () => {
-                const savedPwd = Storage.get("team_access_pwd");
-                if (savedPwd) {
-                    document.getElementById("accessPassword").value = savedPwd;
-                    verifyPassword(new Event("submit"));
+                const savedAuth = Storage.get("team_access_auth");
+                if (savedAuth) {
+                    document.getElementById("accessUsername").value = savedAuth.username;
+                    document.getElementById("accessPassword").value = savedAuth.password;
+                    verifyLogin(new Event("submit"));
                 }
             });
 
-            let currentPassword = "";
+            let currentAuth = null;
 
             async function refreshTeams() {
-                if (!currentPassword) {
-                    const saved = Storage.get("team_access_pwd");
-                    if (saved) currentPassword = saved;
+                if (!currentAuth) {
+                    const saved = Storage.get("team_access_auth");
+                    if (saved) currentAuth = saved;
                     else return location.reload();
                 }
 
@@ -213,7 +222,7 @@
                     const response = await fetch("/api/public/teams", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ password: currentPassword }),
+                        body: JSON.stringify(currentAuth),
                     });
                     const data = await response.json();
                     if (data.success) {
@@ -230,8 +239,9 @@
                 }
             }
 
-            async function verifyPassword(e) {
+            async function verifyLogin(e) {
                 if (e) e.preventDefault();
+                const username = document.getElementById("accessUsername").value;
                 const pwd = document.getElementById("accessPassword").value;
 
                 // 安全获取按钮
@@ -248,24 +258,43 @@
                 }
 
                 try {
+                    // 先验证登录
+                    const loginResponse = await fetch("/api/public/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: username, password: pwd }),
+                    });
+
+                    const loginData = await loginResponse.json();
+
+                    if (!loginData.success) {
+                        alert("验证失败: " + (loginData.error || "账号或密码错误"));
+                        Storage.remove("team_access_auth");
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerText = originalText;
+                        }
+                        return;
+                    }
+
+                    // 登录成功，获取列表
                     const response = await fetch("/api/public/teams", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ password: pwd }),
+                        body: JSON.stringify({ username: username, password: pwd }),
                     });
 
                     const data = await response.json();
 
                     if (data.success) {
-                        currentPassword = pwd;
+                        currentAuth = { username: username, password: pwd };
                         // 保存密码，设置7天过期
-                        Storage.set("team_access_pwd", pwd, 7);
+                        Storage.set("team_access_auth", currentAuth, 7);
                         document.getElementById("passwordOverlay").classList.add("hidden");
                         document.getElementById("mainContent").classList.remove("hidden");
                         renderTeams(data.teams);
                     } else {
-                        alert("验证失败: " + (data.error || "密码错误"));
-                        Storage.remove("team_access_pwd");
+                        alert("获取数据失败: " + (data.error || "未知错误"));
                     }
                 } catch (err) {
                     alert("请求失败，请重试");
@@ -279,7 +308,7 @@
             }
 
             function logout() {
-                Storage.remove("team_access_pwd");
+                Storage.remove("team_access_auth");
                 location.reload();
             }
 
@@ -399,7 +428,7 @@
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            password: currentPassword,
+                            ...currentAuth,
                             email: email,
                         }),
                     });
@@ -410,7 +439,7 @@
                         alert("邀请成功！");
                         closeModal("inviteModal");
                         // 刷新列表以更新人数
-                        verifyPassword(new Event("submit"));
+                        refreshTeams();
                     } else {
                         alert("邀请失败: " + data.error);
                     }
@@ -444,7 +473,7 @@
                     const response = await fetch(`/api/public/teams/${teamId}/members`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ password: currentPassword }),
+                        body: JSON.stringify(currentAuth),
                     });
 
                     const data = await response.json();
@@ -503,7 +532,7 @@
                     const response = await fetch(`/api/public/teams/${teamId}/members/refresh`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ password: currentPassword }),
+                        body: JSON.stringify(currentAuth),
                     });
 
                     const data = await response.json();
@@ -511,7 +540,7 @@
                     if (data.success) {
                         await loadMembers(teamId);
                         // 同时也刷新一下team列表（因为人数可能变了）
-                        verifyPassword(new Event("submit"));
+                        refreshTeams();
                     } else {
                         alert("刷新失败: " + data.error);
                     }

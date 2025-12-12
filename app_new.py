@@ -1684,15 +1684,17 @@ def add_source():
     """添加来源"""
     data = request.json
     name = data.get('name', '').strip()
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
     
     if not name:
         return jsonify({"success": False, "error": "来源名称不能为空"}), 400
         
     try:
-        Source.add(name)
+        Source.add(name, username, password)
         return jsonify({"success": True, "message": "添加成功"})
     except sqlite3.IntegrityError:
-        return jsonify({"success": False, "error": "该来源已存在"}), 400
+        return jsonify({"success": False, "error": "该来源名称或账号已存在"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1722,14 +1724,39 @@ def public_teams_page():
     return render_template('public_teams.html')
 
 
+@app.route('/api/public/login', methods=['POST'])
+def public_login():
+    """公开页面登录验证"""
+    data = request.json
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not username or not password:
+        return jsonify({"success": False, "error": "请输入账号和密码"}), 400
+
+    user = Source.verify_user(username, password)
+    if user:
+        return jsonify({
+            "success": True, 
+            "message": "登录成功",
+            "username": user['username'],
+            "name": user['name']
+        })
+    else:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 401
+
+
 @app.route('/api/public/teams', methods=['POST'])
 def get_public_teams():
-    """获取公开的 Team 列表 (需密码验证)"""
+    """获取公开的 Team 列表 (需账号密码验证)"""
     data = request.json
+    username = data.get('username', '')
     password = data.get('password', '')
 
-    if password != '123abc':
-        return jsonify({"success": False, "error": "密码错误"}), 403
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
 
     try:
         # 获取所有 Team
@@ -1744,13 +1771,16 @@ def get_public_teams():
 
 @app.route('/api/public/teams/<int:team_id>/invite', methods=['POST'])
 def public_invite_member(team_id):
-    """公开页面邀请成员 (需密码验证)"""
+    """公开页面邀请成员 (需账号密码验证)"""
     data = request.json
+    username = data.get('username', '')
     password = data.get('password', '')
     email = data.get('email', '').strip()
 
-    if password != '123abc':
-        return jsonify({"success": False, "error": "密码错误"}), 403
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
 
     if not email:
         return jsonify({"success": False, "error": "请输入邮箱"}), 400
@@ -1836,14 +1866,15 @@ def public_invite_member(team_id):
     result = invite_to_team(team['access_token'], team['account_id'], email, team_id)
 
     if result['success']:
-        # 记录邀请
+        # 记录邀请 (自动归属 source)
         Invitation.create(
             team_id=team_id,
             email=email,
             invite_id=result.get('invite_id'),
             status='success',
             is_temp=False, # 公开页面邀请默认为永久
-            temp_expire_at=None
+            temp_expire_at=None,
+            source=user['name'] # 记录来源
         )
 
         # 更新team的最后邀请时间
@@ -1871,7 +1902,8 @@ def public_invite_member(team_id):
                     email=email,
                     status='success',
                     is_temp=False,
-                    temp_expire_at=None
+                    temp_expire_at=None,
+                    source=user['name'] # 记录来源
                 )
                 Team.update_last_invite(team_id)
                 
@@ -1893,7 +1925,8 @@ def public_invite_member(team_id):
                     email=email,
                     status='success',
                     is_temp=False,
-                    temp_expire_at=None
+                    temp_expire_at=None,
+                    source=user['name'] # 记录来源
                 )
                 Team.update_last_invite(team_id)
                 
@@ -1907,7 +1940,8 @@ def public_invite_member(team_id):
         Invitation.create(
             team_id=team_id,
             email=email,
-            status='failed'
+            status='failed',
+            source=user['name'] # 记录来源（即使失败也记录一下是谁操作的）
         )
         return jsonify({
             "success": False,
@@ -1917,12 +1951,15 @@ def public_invite_member(team_id):
 
 @app.route('/api/public/teams/<int:team_id>/members', methods=['POST'])
 def public_get_members(team_id):
-    """公开页面查看成员 (需密码验证) - 优先从数据库读取"""
+    """公开页面查看成员 (需账号密码验证) - 优先从数据库读取"""
     data = request.json
+    username = data.get('username', '')
     password = data.get('password', '')
 
-    if password != '123abc':
-        return jsonify({"success": False, "error": "密码错误"}), 403
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
 
     team = Team.get_by_id(team_id)
     if not team:
@@ -1949,12 +1986,15 @@ def public_get_members(team_id):
 
 @app.route('/api/public/teams/<int:team_id>/members/refresh', methods=['POST'])
 def public_refresh_members(team_id):
-    """公开页面刷新成员 (需密码验证)"""
+    """公开页面刷新成员 (需账号密码验证)"""
     data = request.json
+    username = data.get('username', '')
     password = data.get('password', '')
 
-    if password != '123abc':
-        return jsonify({"success": False, "error": "密码错误"}), 403
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
 
     team = Team.get_by_id(team_id)
     if not team:
