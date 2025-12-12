@@ -45,18 +45,34 @@
                     <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
                     <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
                 </div>
-                <button
-                    onclick="openRankingModal()"
-                    class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    排行榜
-                </button>
+                <div class="flex items-center gap-3">
+                    <button
+                        onclick="refreshTeams()"
+                        id="refreshTeamsBtn"
+                        class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        刷新列表
+                    </button>
+                    <div class="h-4 w-px bg-gray-300"></div>
+                    <button
+                        onclick="openRankingModal()"
+                        class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        排行榜
+                    </button>
+                </div>
             </header>
 
             <!-- Team 列表容器 -->
@@ -181,10 +197,49 @@
 
             let currentPassword = "";
 
+            async function refreshTeams() {
+                if (!currentPassword) {
+                    const saved = Storage.get("team_access_pwd");
+                    if (saved) currentPassword = saved;
+                    else return location.reload();
+                }
+
+                const btn = document.getElementById("refreshTeamsBtn");
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 刷新中...`;
+
+                try {
+                    const response = await fetch("/api/public/teams", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: currentPassword }),
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        renderTeams(data.teams);
+                    } else {
+                        alert("刷新失败: " + (data.error || "未知错误"));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("刷新出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
             async function verifyPassword(e) {
-                e.preventDefault();
+                if (e) e.preventDefault();
                 const pwd = document.getElementById("accessPassword").value;
-                const btn = e.target.querySelector("button");
+
+                // 安全获取按钮
+                let btn = null;
+                if (e && e.target && e.target instanceof Element) {
+                    btn = e.target.querySelector("button");
+                }
+
                 const originalText = btn ? btn.innerText : "";
 
                 if (btn) {
