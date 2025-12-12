@@ -182,17 +182,27 @@
                         </div>
                     </div>
 
-                    <!-- 右侧成员统计 -->
-                    <div
-                        onclick="openRankingModal()"
-                        class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
-                        title="点击查看来源排行榜">
-                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                        </svg>
-                        <span class="text-sm text-gray-600 font-medium">成员总数：</span>
-                        <span class="text-lg font-bold text-blue-700" id="totalMembersCount">-</span>
+                    <!-- 右侧统计 -->
+                    <div class="flex items-center gap-3">
+                        <!-- Team 总数 -->
+                        <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200" title="Team 总数">
+                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            <span class="text-lg font-bold text-gray-700" id="totalTeamsCount">-</span>
+                        </div>
+
+                        <!-- 成员总数 -->
+                        <div
+                            onclick="openRankingModal()"
+                            class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                            title="点击查看来源排行榜 (成员总数)">
+                            <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                            </svg>
+                            <span class="text-lg font-bold text-blue-700" id="totalMembersCount">-</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -468,12 +478,15 @@
 
                     if (data.success) {
                         document.getElementById("totalMembersCount").textContent = data.total_members;
+                        document.getElementById("totalTeamsCount").textContent = data.total_teams;
                     } else {
                         document.getElementById("totalMembersCount").textContent = "0";
+                        document.getElementById("totalTeamsCount").textContent = "0";
                     }
                 } catch (error) {
                     console.error("加载成员总数失败:", error);
                     document.getElementById("totalMembersCount").textContent = "0";
+                    document.getElementById("totalTeamsCount").textContent = "0";
                 }
             }
 

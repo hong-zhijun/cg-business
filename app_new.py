@@ -655,16 +655,16 @@ def search_teams_by_email():
 @app.route('/api/admin/stats/total-members', methods=['GET'])
 @admin_required
 def get_total_members_count():
-    """统计所有Team的成员总数（不包括所有者）"""
+    """统计所有Team的成员总数（不包括所有者）和Team总数"""
     try:
-        teams = Team.get_all()
-        total_members = 0
+        total_members = MemberNote.get_total_count()
+        total_teams = Team.get_total_count()
         
-        for team in teams:
-            # 使用数据库中已经统计好的 member_count
-            total_members += team.get('member_count', 0)
-        
-        return jsonify({"success": True, "total_members": total_members})
+        return jsonify({
+            "success": True, 
+            "total_members": total_members,
+            "total_teams": total_teams
+        })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

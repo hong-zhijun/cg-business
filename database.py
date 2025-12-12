@@ -376,6 +376,14 @@ class Team:
             cursor.execute('DELETE FROM teams WHERE id = ?', (team_id,))
 
     @staticmethod
+    def get_total_count():
+        """统计Team总数"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT COUNT(*) FROM teams')
+            return cursor.fetchone()[0]
+
+    @staticmethod
     def get_available_teams():
         """获取所有未满员的 Team (轮询机制: 按最后邀请时间排序，最久未使用的优先)"""
         teams = Team.get_all()
@@ -1023,6 +1031,17 @@ class MemberNote:
                 WHERE team_id = ? 
                 AND user_id NOT IN ({placeholders})
             ''', params)
+
+    @staticmethod
+    def get_total_count():
+        """统计所有非owner成员总数"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT COUNT(*) FROM member_notes 
+                WHERE role != 'account-owner' OR role IS NULL
+            ''')
+            return cursor.fetchone()[0]
 
     @staticmethod
     def get_source_ranking():
