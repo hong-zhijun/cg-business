@@ -1658,9 +1658,8 @@ def get_kick_status():
 # ---------------------------------------------------------------------
 
 @app.route('/api/admin/stats/source-ranking', methods=['GET'])
-@admin_required
 def get_source_ranking():
-    """获取来源排行榜"""
+    """获取来源排行榜 (无需鉴权)"""
     try:
         ranking = MemberNote.get_source_ranking()
         return jsonify({"success": True, "ranking": ranking})

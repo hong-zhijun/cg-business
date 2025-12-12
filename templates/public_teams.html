@@ -39,16 +39,19 @@
         </div>
 
         <!-- 主内容区 (默认隐藏) -->
-        <div id="mainContent" class="hidden container mx-auto px-4 py-8">
-            <header class="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
-                    <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
-                </div>
-                <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-600 transition-colors">退出访问</button>
-            </header>
+    <div id="mainContent" class="hidden container mx-auto px-4 py-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
+                <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
+            </div>
+            <button onclick="openRankingModal()" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                排行榜
+            </button>
+        </header>
 
-            <!-- Team 列表容器 -->
+        <!-- Team 列表容器 -->
             <div id="teamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 动态加载内容 -->
                 <div class="col-span-full text-center py-12 text-gray-500">正在加载数据...</div>
@@ -122,8 +125,10 @@
             </div>
         </div>
 
-        <script>
-            // 页面加载时检查是否有保存的密码
+        {% include 'modals/ranking.html' %}
+
+    <script>
+        // 页面加载时检查是否有保存的密码
             document.addEventListener("DOMContentLoaded", () => {
                 const savedPwd = sessionStorage.getItem("team_access_pwd");
                 if (savedPwd) {
