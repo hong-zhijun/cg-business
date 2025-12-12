@@ -1724,6 +1724,12 @@ def public_teams_page():
     return render_template('public_teams.html')
 
 
+@app.route('/team/login')
+def public_team_login_page():
+    """公开 Team 登录页面"""
+    return render_template('team_login.html')
+
+
 @app.route('/api/public/login', methods=['POST'])
 def public_login():
     """公开页面登录验证"""

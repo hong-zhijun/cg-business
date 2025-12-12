@@ -13,39 +13,6 @@
         </style>
     </head>
     <body class="bg-gray-50 min-h-screen">
-        <!-- 全屏密码遮罩 -->
-        <div id="passwordOverlay" class="fixed inset-0 z-50 bg-gray-900 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">访问验证</h2>
-                    <p class="text-gray-500 mt-2">请输入您的账号和密码</p>
-                </div>
-                <form id="passwordForm" onsubmit="verifyLogin(event)" class="space-y-4">
-                    <div>
-                        <input
-                            type="text"
-                            id="accessUsername"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-lg"
-                            placeholder="账号"
-                            required />
-                    </div>
-                    <div>
-                        <input
-                            type="password"
-                            id="accessPassword"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-lg"
-                            placeholder="密码"
-                            required />
-                    </div>
-                    <button
-                        type="submit"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-lg">
-                        确认进入
-                    </button>
-                </form>
-            </div>
-        </div>
-
         <!-- 主内容区 (默认隐藏) -->
         <div id="mainContent" class="hidden container mx-auto px-4 py-8">
             <header class="mb-8 flex justify-between items-center">
@@ -66,6 +33,17 @@
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         刷新列表
+                    </button>
+                    <div class="h-4 w-px bg-gray-300"></div>
+                    <button onclick="logout()" class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        退出
                     </button>
                     <div class="h-4 w-px bg-gray-300"></div>
                     <button
@@ -197,20 +175,23 @@
             // 页面加载时检查是否有保存的密码
             document.addEventListener("DOMContentLoaded", () => {
                 const savedAuth = Storage.get("team_access_auth");
-                if (savedAuth) {
-                    document.getElementById("accessUsername").value = savedAuth.username;
-                    document.getElementById("accessPassword").value = savedAuth.password;
-                    verifyLogin(new Event("submit"));
+                if (!savedAuth) {
+                    window.location.href = "/team/login";
+                    return;
                 }
+                currentAuth = savedAuth;
+                // 显示内容
+                document.getElementById("mainContent").classList.remove("hidden");
+                // 加载数据
+                refreshTeams();
             });
 
             let currentAuth = null;
 
             async function refreshTeams() {
                 if (!currentAuth) {
-                    const saved = Storage.get("team_access_auth");
-                    if (saved) currentAuth = saved;
-                    else return location.reload();
+                    window.location.href = "/team/login";
+                    return;
                 }
 
                 const btn = document.getElementById("refreshTeamsBtn");
@@ -224,6 +205,13 @@
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(currentAuth),
                     });
+
+                    if (response.status === 401 || response.status === 403) {
+                        Storage.remove("team_access_auth");
+                        window.location.href = "/team/login";
+                        return;
+                    }
+
                     const data = await response.json();
                     if (data.success) {
                         renderTeams(data.teams);
@@ -239,77 +227,9 @@
                 }
             }
 
-            async function verifyLogin(e) {
-                if (e) e.preventDefault();
-                const username = document.getElementById("accessUsername").value;
-                const pwd = document.getElementById("accessPassword").value;
-
-                // 安全获取按钮
-                let btn = null;
-                if (e && e.target && e.target instanceof Element) {
-                    btn = e.target.querySelector("button");
-                }
-
-                const originalText = btn ? btn.innerText : "";
-
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = "验证中...";
-                }
-
-                try {
-                    // 先验证登录
-                    const loginResponse = await fetch("/api/public/login", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: username, password: pwd }),
-                    });
-
-                    const loginData = await loginResponse.json();
-
-                    if (!loginData.success) {
-                        alert("验证失败: " + (loginData.error || "账号或密码错误"));
-                        Storage.remove("team_access_auth");
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.innerText = originalText;
-                        }
-                        return;
-                    }
-
-                    // 登录成功，获取列表
-                    const response = await fetch("/api/public/teams", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: username, password: pwd }),
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        currentAuth = { username: username, password: pwd };
-                        // 保存密码，设置7天过期
-                        Storage.set("team_access_auth", currentAuth, 7);
-                        document.getElementById("passwordOverlay").classList.add("hidden");
-                        document.getElementById("mainContent").classList.remove("hidden");
-                        renderTeams(data.teams);
-                    } else {
-                        alert("获取数据失败: " + (data.error || "未知错误"));
-                    }
-                } catch (err) {
-                    alert("请求失败，请重试");
-                    console.error(err);
-                } finally {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerText = originalText;
-                    }
-                }
-            }
-
             function logout() {
                 Storage.remove("team_access_auth");
-                location.reload();
+                window.location.href = "/team/login";
             }
 
             function formatDate(dateStr) {
