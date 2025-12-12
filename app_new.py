@@ -966,6 +966,10 @@ def refresh_members(team_id):
             
         # 删除不在当前列表中的成员（即已退出的成员）
         MemberNote.delete_not_in(team_id, current_user_ids)
+        
+        # 同步清理失效的邀请记录 (修复成员已踢出但邀请记录占位的问题)
+        current_emails = [m.get('email') for m in members if m.get('email')]
+        Invitation.sync_invitations(team_id, current_emails)
             
         return jsonify({"success": True, "message": "成员列表已刷新"})
     else:
@@ -1049,14 +1053,67 @@ def admin_invite_member(team_id):
     if not team:
         return jsonify({"success": False, "error": "Team 不存在"}), 404
 
-    # 检查 Team 人数是否已满 (检查邀请记录数)
+    # 1. 先进行数据库层面的预判
     invited_emails = Invitation.get_all_emails_by_team(team_id)
     if len(invited_emails) >= 4:
         return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
 
-    # 检查该邮箱是否已被成功邀请
+    # 检查该邮箱是否已被成功邀请 (本地检查)
     if email in invited_emails:
         return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+
+    # 2. 实时调用 API 检查并同步最新状态 (Lazy Sync)
+    members_result = get_team_members(team['access_token'], team['account_id'], team_id)
+    
+    if members_result['success']:
+        # 获取最新成员列表
+        members = members_result.get('members', [])
+        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        current_count = len(non_owner_members)
+        
+        # 同步更新数据库
+        Team.update_member_count(team_id, current_count)
+        
+        # 同步成员详情
+        current_user_ids = []
+        for member in members:
+            user_id = member.get('id')
+            if user_id:
+                current_user_ids.append(user_id)
+                email_val = member.get('email')
+                role = member.get('role')
+                created_time_str = member.get('created_time')
+                join_time = member.get('created')
+                if created_time_str:
+                    try:
+                        if created_time_str.endswith('Z'):
+                            created_time_str = created_time_str.replace('Z', '+00:00')
+                        dt = datetime.fromisoformat(created_time_str)
+                        join_time = int(dt.timestamp())
+                    except:
+                        pass
+                MemberNote.sync_member(team_id, user_id, email_val, role, join_time)
+        
+        # 清理失效数据
+        MemberNote.delete_not_in(team_id, current_user_ids)
+        current_emails = [m.get('email') for m in members if m.get('email')]
+        Invitation.sync_invitations(team_id, current_emails)
+        
+        # 2. 检查人数
+        if current_count >= 4:
+            return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+            
+        # 3. 检查邮箱
+        member_emails = [m.get('email', '').lower() for m in members]
+        if email.lower() in member_emails:
+            return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+    else:
+        # API 失败，退化为数据库检查
+        invited_emails = Invitation.get_all_emails_by_team(team_id)
+        if len(invited_emails) >= 4:
+            return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+        if email in invited_emails:
+            return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
 
     # 如果之前有失败记录，先删除（允许重新邀请）
     Invitation.delete_by_email(team_id, email)
@@ -1706,14 +1763,72 @@ def public_invite_member(team_id):
     if not team.get('is_public'):
         return jsonify({"success": False, "error": "该 Team 未公开"}), 403
 
-    # 检查 Team 人数是否已满 (检查邀请记录数)
+    # 1. 先进行数据库层面的预判
+    # 如果本地记录显示已满，直接拦截，不调用 API。
+    # 如果用户发现本地显示已满但实际没满，需要先点击“刷新”按钮同步数据。
     invited_emails = Invitation.get_all_emails_by_team(team_id)
     if len(invited_emails) >= 4:
         return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
 
-    # 检查该邮箱是否已被成功邀请
+    # 检查该邮箱是否已被成功邀请 (本地检查)
     if email in invited_emails:
         return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+
+    # 2. 实时调用 API 检查并同步最新状态 (Lazy Sync)
+    members_result = get_team_members(team['access_token'], team['account_id'], team_id)
+    
+    if members_result['success']:
+        # 获取最新成员列表
+        members = members_result.get('members', [])
+        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        current_count = len(non_owner_members)
+        
+        # 同步更新数据库
+        Team.update_member_count(team_id, current_count)
+        
+        # 同步成员详情 (可选，为了保持数据一致性)
+        current_user_ids = []
+        for member in members:
+            user_id = member.get('id')
+            if user_id:
+                current_user_ids.append(user_id)
+                email_val = member.get('email')
+                role = member.get('role')
+                # 处理时间格式
+                created_time_str = member.get('created_time')
+                join_time = member.get('created')
+                if created_time_str:
+                    try:
+                        if created_time_str.endswith('Z'):
+                            created_time_str = created_time_str.replace('Z', '+00:00')
+                        dt = datetime.fromisoformat(created_time_str)
+                        join_time = int(dt.timestamp())
+                    except:
+                        pass
+                MemberNote.sync_member(team_id, user_id, email_val, role, join_time)
+        
+        # 清理失效数据
+        MemberNote.delete_not_in(team_id, current_user_ids)
+        current_emails = [m.get('email') for m in members if m.get('email')]
+        Invitation.sync_invitations(team_id, current_emails)
+        
+        # 3. 再次检查人数 (使用最新的实时数据)
+        if current_count >= 4:
+            return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+            
+        # 4. 检查该邮箱是否已在此Team中 (实时数据)
+        member_emails = [m.get('email', '').lower() for m in members]
+        if email.lower() in member_emails:
+            return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
+            
+    else:
+        # 如果 API 调用失败 (例如超时)，退化为依赖数据库检查
+        # 这种情况下，我们只能相信数据库
+        invited_emails = Invitation.get_all_emails_by_team(team_id)
+        if len(invited_emails) >= 4:
+            return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+        if email in invited_emails:
+            return jsonify({"success": False, "error": "该邮箱已被邀请过"}), 400
 
     # 如果之前有失败记录，先删除（允许重新邀请）
     Invitation.delete_by_email(team_id, email)
@@ -1826,7 +1941,8 @@ def public_get_members(team_id):
         safe_members.append({
             'email': m.get('email'),
             'role': m.get('role'),
-            'created': m.get('join_time') # 使用 join_time
+            'created': m.get('join_time'), # 使用 join_time
+            'source': m.get('source') # 返回来源
         })
         
     return jsonify({"success": True, "members": safe_members})
@@ -1889,6 +2005,10 @@ def public_refresh_members(team_id):
             
         # 删除不在当前列表中的成员
         MemberNote.delete_not_in(team_id, current_user_ids)
+        
+        # 同步清理失效的邀请记录
+        current_emails = [m.get('email') for m in members if m.get('email')]
+        Invitation.sync_invitations(team_id, current_emails)
             
         return jsonify({"success": True, "message": "成员列表已刷新"})
     else:

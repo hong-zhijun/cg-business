@@ -872,6 +872,41 @@ class Invitation:
             row = cursor.fetchone()
             return dict(row) if row else None
 
+    @staticmethod
+    def sync_invitations(team_id, current_member_emails):
+        """
+        同步邀请记录：删除那些状态为success但不在当前成员列表中的邀请记录。
+        current_member_emails: 当前Team中所有成员的邮箱列表（包括Owner）
+        """
+        if not current_member_emails:
+            current_member_emails = []
+            
+        # 统一转小写
+        current_emails_lower = {email.lower() for email in current_member_emails if email}
+        
+        with get_db() as conn:
+            cursor = conn.cursor()
+            
+            # 获取该Team所有状态为success的邀请记录
+            cursor.execute('''
+                SELECT id, email FROM invitations 
+                WHERE team_id = ? AND status = 'success'
+            ''', (team_id,))
+            
+            rows = cursor.fetchall()
+            deleted_count = 0
+            
+            for row in rows:
+                inv_id = row[0]
+                inv_email = row[1]
+                
+                if inv_email and inv_email.lower() not in current_emails_lower:
+                    # 如果邀请记录中的邮箱不在当前成员列表中，说明该成员已离开，删除记录
+                    cursor.execute('DELETE FROM invitations WHERE id = ?', (inv_id,))
+                    deleted_count += 1
+            
+            return deleted_count
+
 
 class AutoKickConfig:
     @staticmethod
