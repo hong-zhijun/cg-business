@@ -265,6 +265,34 @@ def init_db():
             ON login_attempts(ip_address, created_at)
         ''')
 
+        # 系统配置表 (System Config)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS system_configs (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                description TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # 初始化默认配置 (邮件相关)
+        default_configs = [
+            ('mail_smtp_server', '', 'SMTP 服务器地址 (如 smtp.qq.com)'),
+            ('mail_smtp_port', '465', 'SMTP 端口 (SSL通常为465, TLS通常为587)'),
+            ('mail_smtp_user', '', 'SMTP 用户名/邮箱'),
+            ('mail_smtp_password', '', 'SMTP 密码/授权码'),
+            ('mail_sender_name', 'ChatGPT Team Admin', '发件人显示名称'),
+            ('mail_use_ssl', 'true', '是否使用 SSL (true/false)'),
+            ('mail_enabled', 'false', '是否启用邮件功能 (true/false)'),
+            ('mail_template_export_tutorial', '<h2>ChatGPT Team 使用教程</h2><p>您好，</p><p>欢迎加入我们的 Team！以下是导出数据的详细教程...</p>', '导出教程邮件模板')
+        ]
+
+        for key, value, desc in default_configs:
+            cursor.execute('''
+                INSERT OR IGNORE INTO system_configs (key, value, description)
+                VALUES (?, ?, ?)
+            ''', (key, value, desc))
+
         conn.commit()
 
 
@@ -1254,4 +1282,65 @@ class Source:
                 cursor = conn.cursor()
                 cursor.execute('DELETE FROM sources WHERE id = ?', (source_id,))
                 return cursor.rowcount > 0
+        return execute_with_retry(_exec)
+
+
+class SystemConfig:
+    """系统配置管理"""
+
+    @staticmethod
+    def get(key, default=None):
+        """获取单个配置值"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT value FROM system_configs WHERE key = ?', (key,))
+            row = cursor.fetchone()
+            return row[0] if row else default
+
+    @staticmethod
+    def get_all():
+        """获取所有配置"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM system_configs')
+            return {row['key']: row['value'] for row in cursor.fetchall()}
+            
+    @staticmethod
+    def get_all_with_desc():
+        """获取所有配置（包含描述）"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM system_configs')
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def set(key, value):
+        """设置配置值"""
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE system_configs 
+                    SET value = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE key = ?
+                ''', (value, key))
+                # 如果更新影响行数为0（即key不存在），则插入（虽然初始化时已插入，但以防万一）
+                if cursor.rowcount == 0:
+                     cursor.execute('''
+                        INSERT INTO system_configs (key, value) VALUES (?, ?)
+                    ''', (key, value))
+        return execute_with_retry(_exec)
+        
+    @staticmethod
+    def set_bulk(config_dict):
+        """批量设置配置"""
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                for key, value in config_dict.items():
+                    cursor.execute('''
+                        UPDATE system_configs 
+                        SET value = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE key = ?
+                    ''', (value, key))
         return execute_with_retry(_exec)

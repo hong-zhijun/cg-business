@@ -16,52 +16,90 @@
     <body class="bg-gray-50 min-h-screen">
         <!-- 主内容区 (默认隐藏) -->
         <div id="mainContent" class="hidden container mx-auto px-4 py-8">
-            <header class="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <div class="flex items-center gap-3">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-10 w-10 rounded-lg object-contain" />
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
-                        <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
+            <header class="mb-8 flex flex-col gap-6">
+                <!-- 顶部栏 -->
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-10 w-10 rounded-lg object-contain" />
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Team 资源列表</h1>
+                            <p class="text-gray-500 text-sm mt-1">查看及管理可用 Team 资源</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button
+                            onclick="refreshTeams()"
+                            id="refreshTeamsBtn"
+                            class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            刷新列表
+                        </button>
+                        <div class="h-4 w-px bg-gray-300"></div>
+                        <button
+                            onclick="logout()"
+                            class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            退出
+                        </button>
+                        <div class="h-4 w-px bg-gray-300"></div>
+                        <button
+                            onclick="openRankingModal()"
+                            class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            排行榜
+                        </button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button
-                        onclick="refreshTeams()"
-                        id="refreshTeamsBtn"
-                        class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        刷新列表
-                    </button>
-                    <div class="h-4 w-px bg-gray-300"></div>
-                    <button onclick="logout()" class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                        </svg>
-                        退出
-                    </button>
-                    <div class="h-4 w-px bg-gray-300"></div>
-                    <button
-                        onclick="openRankingModal()"
-                        class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        排行榜
-                    </button>
+
+                <!-- 操作栏 (发送教程) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row items-center gap-4">
+                    <div class="flex-1 w-full flex items-center gap-2 justify-end">
+                        <div class="relative w-64">
+                            <input
+                                type="email"
+                                id="tutorialEmail"
+                                placeholder="输入邮箱接收导出教程..."
+                                class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                            <svg
+                                class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <button
+                            onclick="sendTutorial()"
+                            id="sendTutorialBtn"
+                            class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors text-sm font-medium whitespace-nowrap flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            发送导出教程
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -69,6 +107,28 @@
             <div id="teamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 动态加载内容 -->
                 <div class="col-span-full text-center py-12 text-gray-500">正在加载数据...</div>
+            </div>
+        </div>
+
+        <!-- Alert Modal -->
+        <div id="alertModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">提示</h2>
+                    <button onclick="closeModal('alertModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="alertMessage" class="text-gray-700 whitespace-pre-line mb-6"></div>
+                <div class="flex justify-end gap-3">
+                    <button
+                        onclick="closeModal('alertModal')"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        确定
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -175,6 +235,21 @@
                     localStorage.removeItem(key);
                 },
             };
+
+            // 覆盖原生 alert
+            (function () {
+                const nativeAlert = window.alert;
+                window.alert = function (msg) {
+                    const messageEl = document.getElementById("alertMessage");
+                    const modalEl = document.getElementById("alertModal");
+                    if (messageEl && modalEl) {
+                        messageEl.textContent = String(msg);
+                        openModal("alertModal");
+                    } else {
+                        nativeAlert(String(msg));
+                    }
+                };
+            })();
 
             // 页面加载时检查是否有保存的密码
             document.addEventListener("DOMContentLoaded", () => {
@@ -326,6 +401,10 @@
                 document.getElementById(id).classList.add("hidden");
             }
 
+            function openRankingModal() {
+                openModal("rankingModal");
+            }
+
             // 邀请相关
             function openInviteModal(teamId, teamName) {
                 document.getElementById("inviteTeamId").value = teamId;
@@ -470,6 +549,44 @@
                     }
                 } catch (err) {
                     alert("刷新请求出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
+            // 发送教程
+            async function sendTutorial() {
+                const email = document.getElementById("tutorialEmail").value.trim();
+                const btn = document.getElementById("sendTutorialBtn");
+
+                if (!email) {
+                    alert("请输入邮箱");
+                    return;
+                }
+
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 发送中...`;
+
+                try {
+                    const response = await fetch("/api/public/send-tutorial", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: email }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert("✅ " + data.message);
+                        document.getElementById("tutorialEmail").value = ""; // 清空输入框
+                    } else {
+                        alert("❌ " + data.error);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("发送请求失败");
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;

@@ -13,6 +13,8 @@ import pytz
 from config import *
 from auto_kick_service import auto_kick_service
 import threading
+from database import SystemConfig
+import mail_service
 
 
 def convert_to_beijing_time(timestamp_str):
@@ -1710,13 +1712,44 @@ def delete_source(source_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# ================== 系统配置 API ==================
+
+@app.route('/api/admin/config/mail', methods=['GET'])
+@admin_required
+def get_mail_config():
+    """获取邮件配置"""
+    configs = SystemConfig.get_all()
+    # 过滤掉非邮件配置
+    mail_configs = {k: v for k, v in configs.items() if k.startswith('mail_')}
+    return jsonify({"success": True, "config": mail_configs})
+
+@app.route('/api/admin/config/mail', methods=['POST'])
+@admin_required
+def update_mail_config():
+    """更新邮件配置"""
+    data = request.json
+    try:
+        SystemConfig.set_bulk(data)
+        return jsonify({"success": True, "message": "配置已保存"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/mail/test', methods=['POST'])
+@admin_required
+def test_mail():
+    """发送测试邮件"""
+    email = request.json.get('email')
+    if not email:
+        return jsonify({"success": False, "error": "请输入收件人邮箱"}), 400
+        
+    success, message = mail_service.send_test_mail(email)
+    if success:
+        return jsonify({"success": True, "message": "测试邮件已发送，请查收"})
+    else:
+        return jsonify({"success": False, "error": f"发送失败: {message}"}), 500
 
 
-
-
-
-
-# ==================== 公开 Team 页面路由 ====================
+# ================== 公开 Team 页面路由 ==================
 
 @app.route('/team')
 def public_teams_page():
@@ -2058,6 +2091,30 @@ def public_refresh_members(team_id):
         return jsonify({"success": True, "message": "成员列表已刷新"})
     else:
         return jsonify(result), result.get('status_code', 500)
+
+
+@app.route('/api/public/send-tutorial', methods=['POST'])
+def public_send_tutorial():
+    """发送导出教程邮件 (无需鉴权)"""
+    data = request.json
+    email = data.get('email', '').strip()
+    
+    if not email:
+        return jsonify({"success": False, "error": "请输入邮箱"}), 400
+        
+    # 获取模板
+    template = SystemConfig.get('mail_template_export_tutorial')
+    if not template:
+        return jsonify({"success": False, "error": "管理员尚未配置教程模板"}), 404
+        
+    # 发送邮件
+    subject = "工作空间记录导出教程"
+    success, message = mail_service.send_mail(email, subject, template, is_html=True)
+    
+    if success:
+        return jsonify({"success": True, "message": "教程已发送，请查收邮件"})
+    else:
+        return jsonify({"success": False, "error": f"发送失败: {message}"}), 500
 
 
 @app.route('/health')

@@ -174,6 +174,22 @@
                                 </svg>
                                 编辑来源
                             </button>
+                            <button
+                                onclick="openMailConfigModal()"
+                                class="inline-flex items-center px-3 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
+                                <svg
+                                    class="w-4 h-4 mr-2 text-blue-500 group-hover:text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                邮件设置
+                            </button>
                         </div>
                     </div>
 
@@ -181,8 +197,12 @@
                     <div class="flex items-center gap-3">
                         <!-- Team 总数 -->
                         <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200" title="Team 总数">
-                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                             <span class="text-lg font-bold text-gray-700" id="totalTeamsCount">-</span>
                         </div>
@@ -300,7 +320,7 @@
         'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
         'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
         'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %} {% include 'modals/sources.html' %}
-        {% include 'modals/ranking.html' %}
+        {% include 'modals/ranking.html' %} {% include 'modals/mail_config.html' %}
 
         <div
             id="alertModal"
