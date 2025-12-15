@@ -844,14 +844,43 @@ class Invitation:
 
     @staticmethod
     def get_success_count_by_team(team_id):
-        """获取 Team 的成功邀请数量（用于判断Team是否已满）"""
+        """
+        获取 Team 的成功邀请数量（用于判断Team是否已满）
+        逻辑修正：
+        1. 获取 member_notes 中的实际成员数量
+        2. 获取 invitations 中状态为 'success' 且不在 member_notes 中的数量 (即 Pending 邀请)
+        3. 两者相加才是真正的占用名额
+        """
         with get_db() as conn:
             cursor = conn.cursor()
+            
+            # 1. 实际成员数 (排除 Owner)
             cursor.execute('''
-                SELECT COUNT(DISTINCT email) FROM invitations
+                SELECT COUNT(*) FROM member_notes 
+                WHERE team_id = ? AND role != 'account-owner'
+            ''', (team_id,))
+            member_count = cursor.fetchone()[0]
+            
+            # 2. 获取实际成员邮箱集合
+            cursor.execute('''
+                SELECT email FROM member_notes 
+                WHERE team_id = ? AND role != 'account-owner'
+            ''', (team_id,))
+            member_emails = {row[0].lower() for row in cursor.fetchall() if row[0]}
+            
+            # 3. 获取邀请中(success)但未加入的记录
+            cursor.execute('''
+                SELECT DISTINCT email FROM invitations
                 WHERE team_id = ? AND status = 'success'
             ''', (team_id,))
-            return cursor.fetchone()[0]
+            
+            pending_count = 0
+            for row in cursor.fetchall():
+                email = row[0]
+                if email and email.lower() not in member_emails:
+                    pending_count += 1
+            
+            return member_count + pending_count
 
     @staticmethod
     def get_temp_expired():
@@ -934,37 +963,46 @@ class Invitation:
     @staticmethod
     def sync_invitations(team_id, current_member_emails):
         """
-        同步邀请记录：删除那些状态为success但不在当前成员列表中的邀请记录。
-        current_member_emails: 当前Team中所有成员的邮箱列表（包括Owner）
-        """
-        if not current_member_emails:
-            current_member_emails = []
-            
-        # 统一转小写
-        current_emails_lower = {email.lower() for email in current_member_emails if email}
+        同步邀请记录：
+        原逻辑会删除不在 member_list 中的邀请，但这会导致 '邀请中' (Pending) 的记录被误删。
+        因此，这里暂时取消删除逻辑，只做日志记录或保留，以确保 Pending 状态的邀请不会消失。
         
-        with get_db() as conn:
-            cursor = conn.cursor()
+        如果需要清理已失效的邀请，应该通过对比 OpenAI 的 Pending 列表来进行，
+        或者由管理员手动取消/删除。
+        """
+        return 0
+        
+        # 下面是原逻辑（已注释，防止误删 Pending 邀请）
+        # if not current_member_emails:
+        #     current_member_emails = []
             
-            # 获取该Team所有状态为success的邀请记录
-            cursor.execute('''
-                SELECT id, email FROM invitations 
-                WHERE team_id = ? AND status = 'success'
-            ''', (team_id,))
+        # # 统一转小写
+        # current_emails_lower = {email.lower() for email in current_member_emails if email}
+        
+        # with get_db() as conn:
+        #     cursor = conn.cursor()
             
-            rows = cursor.fetchall()
-            deleted_count = 0
+        #     # 获取该Team所有状态为success的邀请记录
+        #     cursor.execute('''
+        #         SELECT id, email FROM invitations 
+        #         WHERE team_id = ? AND status = 'success'
+        #     ''', (team_id,))
             
-            for row in rows:
-                inv_id = row[0]
-                inv_email = row[1]
+        #     rows = cursor.fetchall()
+        #     deleted_count = 0
+            
+        #     for row in rows:
+        #         inv_id = row[0]
+        #         inv_email = row[1]
                 
-                if inv_email and inv_email.lower() not in current_emails_lower:
-                    # 如果邀请记录中的邮箱不在当前成员列表中，说明该成员已离开，删除记录
-                    cursor.execute('DELETE FROM invitations WHERE id = ?', (inv_id,))
-                    deleted_count += 1
+        #         if inv_email and inv_email.lower() not in current_emails_lower:
+        #             # 如果邀请记录中的邮箱不在当前成员列表中，说明该成员已离开，删除记录
+        #             # FIX: 这里有个严重逻辑错误！未加入(Pending)的成员也不在列表中，会被误删！
+        #             # cursor.execute('DELETE FROM invitations WHERE id = ?', (inv_id,))
+        #             # deleted_count += 1
+        #             pass
             
-            return deleted_count
+        #     return deleted_count
 
 
 class AutoKickConfig:

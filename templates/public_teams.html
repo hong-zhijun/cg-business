@@ -331,13 +331,14 @@
 
                 container.innerHTML = teams
                     .map((team) => {
+                        // 重新计算逻辑：
+                        // joinedCount = 实际已加入成员 (member_count)
+                        // totalUsed = 数据库返回的 invite_count (包含了 member_count + pending)
+                        // 所以 pendingCount = totalUsed - joinedCount
+
                         const joinedCount = team.member_count || 0;
-                        const totalInvited = team.invite_count || 0;
-                        // 计算待加入（已邀请但未加入）的数量
-                        // 注意：这里假设 invite_count 包含了 joinedCount (通常如此，除非是手动添加的成员)
-                        // 为了安全起见，pendingCount = max(0, totalInvited - joinedCount)
-                        const pendingCount = Math.max(0, totalInvited - joinedCount);
-                        const totalUsed = joinedCount + pendingCount;
+                        const totalUsed = team.invite_count || 0;
+                        const pendingCount = Math.max(0, totalUsed - joinedCount);
                         const isFull = totalUsed >= 4;
 
                         // 确定已加入部分的颜色
