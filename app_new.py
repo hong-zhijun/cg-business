@@ -124,9 +124,9 @@ def invite_to_team(access_token, account_id, email, team_id=None):
         return {"success": False, "error": str(e)}
 
 
-def cancel_invite_from_openai(access_token, account_id, invite_id, email):
+def cancel_invite_from_openai(access_token, account_id, email):
     """调用 ChatGPT API 撤销邀请"""
-    url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites/{invite_id}"
+    url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites"
     
     headers = {
         "accept": "*/*",
@@ -1161,7 +1161,7 @@ def cancel_team_invitation(team_id):
     api_message = ""
     
     if invitation and invitation.get('invite_id'):
-        result = cancel_invite_from_openai(team['access_token'], team['account_id'], invitation['invite_id'], email)
+        result = cancel_invite_from_openai(team['access_token'], team['account_id'], email)
         if result['success']:
             api_success = True
             api_message = " (OpenAI API 同步撤销成功)"
@@ -1174,7 +1174,7 @@ def cancel_team_invitation(team_id):
             target_invite = next((inv for inv in pending_result.get('invites', []) 
                                 if inv.get('email_address', '').lower() == email.lower()), None)
             if target_invite:
-                result = cancel_invite_from_openai(team['access_token'], team['account_id'], target_invite.get('id'), email)
+                result = cancel_invite_from_openai(team['access_token'], team['account_id'], email)
                 if result['success']:
                     api_success = True
                     api_message = " (OpenAI API 同步撤销成功)"

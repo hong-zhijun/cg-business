@@ -920,6 +920,19 @@ class Invitation:
             ''', (user_id, invitation_id,))
 
     @staticmethod
+    def get_by_email(team_id, email):
+        """获取指定 Team 中指定邮箱的邀请记录"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM invitations
+                WHERE team_id = ? AND LOWER(email) = LOWER(?)
+                LIMIT 1
+            ''', (team_id, email))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    @staticmethod
     def get_teams_by_email(email):
         """通过邮箱查找该成员可能所在的所有Team ID列表"""
         with get_db() as conn:
