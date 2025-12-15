@@ -331,9 +331,33 @@
 
                 container.innerHTML = teams
                     .map((team) => {
-                        const isFull = team.member_count >= 4;
-                        const progressColor = isFull ? "bg-red-500" : team.member_count >= 3 ? "bg-yellow-500" : "bg-green-500";
-                        const percent = (team.member_count / 4) * 100;
+                        const joinedCount = team.member_count || 0;
+                        const totalInvited = team.invite_count || 0;
+                        // 计算待加入（已邀请但未加入）的数量
+                        // 注意：这里假设 invite_count 包含了 joinedCount (通常如此，除非是手动添加的成员)
+                        // 为了安全起见，pendingCount = max(0, totalInvited - joinedCount)
+                        const pendingCount = Math.max(0, totalInvited - joinedCount);
+                        const totalUsed = joinedCount + pendingCount;
+                        const isFull = totalUsed >= 4;
+
+                        // 确定已加入部分的颜色
+                        let joinedColor = "bg-green-500";
+                        if (joinedCount >= 4) joinedColor = "bg-red-500";
+                        else if (joinedCount === 3) joinedColor = "bg-orange-500";
+
+                        // 生成4格进度条 HTML
+                        let barsHtml = "";
+                        for (let i = 0; i < 4; i++) {
+                            let color = "bg-gray-100"; // 默认为空位颜色
+
+                            if (i < joinedCount) {
+                                color = joinedColor; // 已加入
+                            } else if (i < joinedCount + pendingCount) {
+                                color = "bg-blue-400"; // 邀请中
+                            }
+
+                            barsHtml += `<div class="flex-1 h-2 rounded-full ${color} transition-colors duration-300"></div>`;
+                        }
 
                         return `
                 <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden flex flex-col">
@@ -357,10 +381,13 @@
                             <div>
                                 <div class="flex justify-between text-xs text-gray-600 mb-1">
                                     <span>成员数量</span>
-                                    <span class="font-medium">${team.member_count} / 4</span>
+                                    <div class="flex gap-2">
+                                         <span class="font-medium ${joinedCount >= 4 ? "text-red-600" : "text-gray-900"}">${joinedCount} 已加入</span>
+                                         ${pendingCount > 0 ? `<span class="text-blue-500 font-medium">+ ${pendingCount} 邀请中</span>` : ""}
+                                    </div>
                                 </div>
-                                <div class="w-full bg-gray-100 rounded-full h-2">
-                                    <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                                <div class="flex gap-1.5 w-full">
+                                    ${barsHtml}
                                 </div>
                             </div>
 
@@ -495,8 +522,15 @@
                                         ${m.role === "account-owner" ? "所有者" : "成员"}
                                     </span>
                                     ${
+                                        m.status
+                                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                  m.status === 2 ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                                              }">${m.status_text || (m.status === 2 ? "已加入" : "已邀请")}</span>`
+                                            : ""
+                                    }
+                                    ${
                                         m.source
-                                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 border border-blue-100">${m.source}</span>`
+                                            ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">来源: ${m.source}</span>`
                                             : ""
                                     }
                                 </div>

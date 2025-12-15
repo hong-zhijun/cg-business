@@ -124,6 +124,31 @@ def invite_to_team(access_token, account_id, email, team_id=None):
         return {"success": False, "error": str(e)}
 
 
+def cancel_invite_from_openai(access_token, account_id, invite_id):
+    """调用 ChatGPT API 撤销邀请"""
+    url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites/{invite_id}"
+    
+    headers = {
+        "accept": "*/*",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "authorization": f"Bearer {access_token}",
+        "chatgpt-account-id": account_id,
+        "origin": "https://chatgpt.com",
+        "referer": "https://chatgpt.com/admin",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    }
+    
+    try:
+        response = cf_requests.delete(url, headers=headers, impersonate="chrome110")
+        
+        if response.status_code in [200, 204]:
+            return {"success": True}
+        else:
+            return {"success": False, "error": response.text}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def get_team_subscription(access_token, account_id):
     """获取 Team 订阅信息"""
     url = f"https://chatgpt.com/backend-api/subscriptions?account_id={account_id}"
@@ -868,17 +893,19 @@ def kick_member(access_token, account_id, user_id):
 @app.route('/api/admin/teams/<int:team_id>/members', methods=['GET'])
 @admin_required
 def get_members(team_id):
-    """获取 Team 成员列表 (从数据库查询)"""
+    """获取 Team 成员列表 (从数据库查询，合并已加入和待邀请)"""
     team = Team.get_by_id(team_id)
     if not team:
         return jsonify({"success": False, "error": "Team 不存在"}), 404
 
-    # 从数据库获取成员列表
+    # 1. 获取已加入成员 (Status: 2)
     db_members = MemberNote.get_all(team_id)
     
-    results = []
+    # 使用字典去重，key为小写邮箱
+    merged_members = {}
+    
     for member_data in db_members:
-        # 构造返回对象，保持与API返回结构相似，方便前端处理
+        # 构造返回对象
         member = {
             'id': member_data['user_id'],
             'user_id': member_data['user_id'],
@@ -887,7 +914,9 @@ def get_members(team_id):
             'note': member_data['note'],
             'source': member_data['source'],
             # 使用 join_time 如果存在，否则使用 updated_at
-            'created': member_data.get('join_time')
+            'created': member_data.get('join_time'),
+            'status': 2,  # 2-已加入
+            'status_text': '已加入'
         }
         
         # 处理时间显示
@@ -900,7 +929,7 @@ def get_members(team_id):
              # 如果没有 join_time，尝试使用 updated_at
              member['created_at'] = convert_to_beijing_time(member_data['updated_at'])
 
-        # 获取邀请信息
+        # 获取邀请信息 (补充 is_temp 等信息)
         invitation = Invitation.get_by_user_id(team_id, member['user_id'])
         if invitation:
             member['invitation_id'] = invitation['id']
@@ -913,7 +942,71 @@ def get_members(team_id):
             member['is_confirmed'] = False
             member['temp_expire_at'] = None
             
-        results.append(member)
+        email_key = member['email'].strip().lower() if member['email'] else ''
+        if email_key:
+            merged_members[email_key] = member
+        else:
+            # 如果没有邮箱（极少情况），用user_id做key
+            merged_members[member['user_id']] = member
+
+    # 2. 获取待处理邀请 (Status: 1)
+    invitations = Invitation.get_by_team(team_id)
+    
+    for inv in invitations:
+        email = inv.get('email', '').strip().lower()
+        if not email:
+            continue
+            
+        # 如果该邮箱已经在 merged_members 中，说明已加入，跳过（以 MemberNote 为准）
+        if email in merged_members:
+            continue
+            
+        # 确定状态文本
+        status_text = '已邀请'
+        if inv.get('status') == 'success':
+             status_text = '已接受邀请' # 但未同步到member_notes
+        elif inv.get('status') == 'failed':
+             status_text = '邀请失败'
+        elif inv.get('status') == 'expired':
+             status_text = '已过期'
+        
+        invite_obj = {
+            'id': inv.get('user_id') or f"invite_{inv.get('id')}",
+            'user_id': inv.get('user_id'),
+            'email': inv.get('email'),
+            'role': 'member', # 默认角色
+            'note': '',
+            'source': inv.get('source'),
+            'created': inv.get('created_at'),
+            'status': 1, # 1-已邀请/待进组
+            'status_text': status_text,
+            'invite_status': inv.get('status'),
+            
+            # 邀请相关字段
+            'invitation_id': inv.get('id'),
+            'is_temp': inv.get('is_temp'),
+            'is_confirmed': inv.get('is_confirmed'),
+            'temp_expire_at': inv.get('temp_expire_at')
+        }
+        
+        # 处理时间
+        if invite_obj['created']:
+             try:
+                invite_obj['created_at'] = convert_to_beijing_time(invite_obj['created'])
+             except:
+                invite_obj['created_at'] = invite_obj['created']
+                
+        merged_members[email] = invite_obj
+
+    # 转为列表并按时间排序 (倒序)
+    results = list(merged_members.values())
+    
+    def get_sort_time(x):
+        t = x.get('created')
+        if not t: return ''
+        return str(t)
+
+    results.sort(key=get_sort_time, reverse=True)
 
     return jsonify({"success": True, "members": results})
 
@@ -1037,6 +1130,53 @@ def kick_team_member(team_id, user_id):
             error_message=result.get('error')
         )
         return jsonify({"success": False, "error": result.get('error')}), 500
+
+
+@app.route('/api/admin/teams/<int:team_id>/invitations/<email>', methods=['DELETE'])
+@admin_required
+def cancel_team_invitation(team_id, email):
+    """取消/撤销邀请"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    # 1. 查找数据库中的邀请记录，获取 invite_id
+    # 注意：invitation 表中可能没有 invite_id (如果是在我们系统之外邀请的，或者旧数据)
+    # 但如果是我们系统发起的邀请，应该会有
+    invitation = Invitation.get_by_email(team_id, email)
+    
+    # 2. 如果有 invite_id，尝试调用 OpenAI API 撤销
+    api_success = False
+    api_message = ""
+    
+    if invitation and invitation.get('invite_id'):
+        result = cancel_invite_from_openai(team['access_token'], team['account_id'], invitation['invite_id'])
+        if result['success']:
+            api_success = True
+            api_message = " (OpenAI API 同步撤销成功)"
+        else:
+            api_message = f" (OpenAI API 撤销失败: {result.get('error')})"
+    else:
+        # 如果没有 invite_id，尝试从 pending 列表中查找
+        pending_result = get_pending_invites(team['access_token'], team['account_id'])
+        if pending_result['success']:
+            target_invite = next((inv for inv in pending_result.get('invites', []) 
+                                if inv.get('email_address', '').lower() == email.lower()), None)
+            if target_invite:
+                result = cancel_invite_from_openai(team['access_token'], team['account_id'], target_invite.get('id'))
+                if result['success']:
+                    api_success = True
+                    api_message = " (OpenAI API 同步撤销成功)"
+                else:
+                    api_message = f" (OpenAI API 撤销失败: {result.get('error')})"
+
+    # 3. 无论 API 是否成功，都删除本地记录，释放名额
+    Invitation.delete_by_email(team_id, email)
+    
+    return jsonify({
+        "success": True, 
+        "message": f"邀请已取消{api_message}"
+    })
 
 
 @app.route('/api/admin/teams/<int:team_id>/invite', methods=['POST'])
@@ -1801,7 +1941,15 @@ def get_public_teams():
         # 获取所有 Team
         all_teams = Team.get_all()
         # 筛选 is_public=True 的 Team
-        public_teams = [t for t in all_teams if t.get('is_public')]
+        public_teams = []
+        for t in all_teams:
+            if t.get('is_public'):
+                # 获取该 Team 的成功邀请数量 (用于前端展示进度条: 已加入 vs 已邀请)
+                # member_count 是已加入数量
+                # invite_count 是总的邀请占位数量 (包含已加入和待加入)
+                # 所以待加入数量 = max(0, invite_count - member_count)
+                t['invite_count'] = Invitation.get_success_count_by_team(t['id'])
+                public_teams.append(t)
 
         return jsonify({"success": True, "teams": public_teams})
     except Exception as e:
@@ -1990,7 +2138,7 @@ def public_invite_member(team_id):
 
 @app.route('/api/public/teams/<int:team_id>/members', methods=['POST'])
 def public_get_members(team_id):
-    """公开页面查看成员 (需账号密码验证) - 优先从数据库读取"""
+    """公开页面查看成员 (需账号密码验证) - 优先从数据库读取，合并邀请状态"""
     data = request.json
     username = data.get('username', '')
     password = data.get('password', '')
@@ -2007,18 +2155,71 @@ def public_get_members(team_id):
     if not team.get('is_public'):
         return jsonify({"success": False, "error": "该 Team 未公开"}), 403
 
-    # 从 member_notes 表中读取成员列表
+    # 1. 获取已加入成员 (Status: 2)
     db_members = MemberNote.get_all(team_id)
     
-    # 格式化输出
-    safe_members = []
+    # 使用字典去重，key为小写邮箱
+    merged_members = {}
+    
     for m in db_members:
-        safe_members.append({
+        safe_m = {
             'email': m.get('email'),
             'role': m.get('role'),
             'created': m.get('join_time'), # 使用 join_time
-            'source': m.get('source') # 返回来源
-        })
+            'source': m.get('source'), # 返回来源
+            'status': 2,
+            'status_text': '已加入'
+        }
+        
+        email_key = safe_m['email'].strip().lower() if safe_m['email'] else ''
+        if email_key:
+            merged_members[email_key] = safe_m
+        else:
+            # 没有邮箱的情况（极少），这里简单处理，如果 public view 必须依赖 email 可能会有问题
+            # 但通常 member 都有 email
+            pass
+
+    # 2. 获取待处理邀请 (Status: 1)
+    invitations = Invitation.get_by_team(team_id)
+    
+    for inv in invitations:
+        email = inv.get('email', '').strip().lower()
+        if not email:
+            continue
+            
+        # 如果该邮箱已经在 merged_members 中，说明已加入，跳过
+        if email in merged_members:
+            continue
+            
+        # 确定状态文本
+        status_text = '已邀请'
+        if inv.get('status') == 'success':
+             status_text = '已接受邀请'
+        elif inv.get('status') == 'failed':
+             status_text = '邀请失败'
+        elif inv.get('status') == 'expired':
+             status_text = '已过期'
+        
+        invite_obj = {
+            'email': inv.get('email'),
+            'role': 'member',
+            'created': inv.get('created_at'),
+            'source': inv.get('source'),
+            'status': 1,
+            'status_text': status_text
+        }
+        
+        merged_members[email] = invite_obj
+
+    # 转为列表并按时间排序 (倒序)
+    safe_members = list(merged_members.values())
+    
+    def get_sort_time(x):
+        t = x.get('created')
+        if not t: return ''
+        return str(t)
+
+    safe_members.sort(key=get_sort_time, reverse=True)
         
     return jsonify({"success": True, "members": safe_members})
 
