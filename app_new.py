@@ -124,7 +124,7 @@ def invite_to_team(access_token, account_id, email, team_id=None):
         return {"success": False, "error": str(e)}
 
 
-def cancel_invite_from_openai(access_token, account_id, invite_id):
+def cancel_invite_from_openai(access_token, account_id, invite_id, email):
     """调用 ChatGPT API 撤销邀请"""
     url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites/{invite_id}"
     
@@ -133,13 +133,18 @@ def cancel_invite_from_openai(access_token, account_id, invite_id):
         "accept-language": "zh-CN,zh;q=0.9",
         "authorization": f"Bearer {access_token}",
         "chatgpt-account-id": account_id,
+        "content-type": "application/json",
         "origin": "https://chatgpt.com",
         "referer": "https://chatgpt.com/admin",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
     }
     
+    payload = {
+        "email_address": email
+    }
+    
     try:
-        response = cf_requests.delete(url, headers=headers, impersonate="chrome110")
+        response = cf_requests.delete(url, headers=headers, json=payload, impersonate="chrome110")
         
         if response.status_code in [200, 204]:
             return {"success": True}
@@ -964,7 +969,7 @@ def get_members(team_id):
         # 确定状态文本
         status_text = '已邀请'
         if inv.get('status') == 'success':
-             status_text = '已接受邀请' # 但未同步到member_notes
+             status_text = '已发送邀请' # 但未同步到member_notes
         elif inv.get('status') == 'failed':
              status_text = '邀请失败'
         elif inv.get('status') == 'expired':
@@ -1150,7 +1155,7 @@ def cancel_team_invitation(team_id, email):
     api_message = ""
     
     if invitation and invitation.get('invite_id'):
-        result = cancel_invite_from_openai(team['access_token'], team['account_id'], invitation['invite_id'])
+        result = cancel_invite_from_openai(team['access_token'], team['account_id'], invitation['invite_id'], email)
         if result['success']:
             api_success = True
             api_message = " (OpenAI API 同步撤销成功)"
@@ -1163,7 +1168,7 @@ def cancel_team_invitation(team_id, email):
             target_invite = next((inv for inv in pending_result.get('invites', []) 
                                 if inv.get('email_address', '').lower() == email.lower()), None)
             if target_invite:
-                result = cancel_invite_from_openai(team['access_token'], team['account_id'], target_invite.get('id'))
+                result = cancel_invite_from_openai(team['access_token'], team['account_id'], target_invite.get('id'), email)
                 if result['success']:
                     api_success = True
                     api_message = " (OpenAI API 同步撤销成功)"
@@ -2194,7 +2199,7 @@ def public_get_members(team_id):
         # 确定状态文本
         status_text = '已邀请'
         if inv.get('status') == 'success':
-             status_text = '已接受邀请'
+             status_text = '已发送邀请'
         elif inv.get('status') == 'failed':
              status_text = '邀请失败'
         elif inv.get('status') == 'expired':
