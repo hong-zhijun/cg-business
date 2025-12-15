@@ -199,6 +199,32 @@
             </div>
         </div>
 
+        <!-- 每日提示模态框 -->
+        <div id="dailyNoticeModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">提示</h2>
+                    <button onclick="closeDailyNoticeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="text-gray-700 mb-6 space-y-1 text-base">
+                    <p>！！！劳烦各位拉了人进组之后点一下刷新，确定进组了。</p>
+                    <p>（不刷新数据没同步可能导致超员）</p>
+                    <p>！！！发现有超过5个的组，请立刻联系我。</p>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button
+                        onclick="closeDailyNoticeModal()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        我知道了
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {% include 'modals/ranking.html' %}
 
         <script>
@@ -263,6 +289,8 @@
                 document.getElementById("mainContent").classList.remove("hidden");
                 // 加载数据
                 refreshTeams();
+                // 检查每日提示
+                checkDailyNotice();
             });
 
             let currentAuth = null;
@@ -622,6 +650,27 @@
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
+            }
+
+            // 每日提示相关逻辑
+            function checkDailyNotice() {
+                const key = "daily_notice_next_show";
+                const nextShow = localStorage.getItem(key);
+                const now = new Date().getTime();
+
+                // 如果没有记录，或者当前时间超过了下次显示时间，则显示
+                if (!nextShow || now > parseInt(nextShow)) {
+                    openModal("dailyNoticeModal");
+                }
+            }
+
+            function closeDailyNoticeModal() {
+                closeModal("dailyNoticeModal");
+                const key = "daily_notice_next_show";
+                const now = new Date();
+                // 设置下次显示时间为24小时后
+                const nextShow = now.getTime() + 24 * 60 * 60 * 1000;
+                localStorage.setItem(key, nextShow);
             }
         </script>
     </body>
