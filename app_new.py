@@ -1090,6 +1090,27 @@ def update_member_note(team_id, user_id):
     return jsonify({"success": True})
 
 
+@app.route('/api/admin/teams/<int:team_id>/members/<user_id>/local-delete', methods=['DELETE'])
+@admin_required
+def local_delete_team_member(team_id, user_id):
+    """仅从本地数据库删除成员记录，不调用OpenAI API"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    # 删除 member_notes 记录
+    deleted = MemberNote.delete_by_user_id(team_id, user_id)
+    
+    # 尝试查找并删除可能的邀请记录（释放位置）
+    # 需要先获取email，但如果MemberNote已经被删除了，可能拿不到
+    # 所以这里只尝试做 Invitation 清理，不做强关联
+    
+    if deleted:
+        return jsonify({"success": True, "message": "成员记录已从本地删除"})
+    else:
+        return jsonify({"success": False, "error": "未找到成员记录"}), 404
+
+
 @app.route('/api/admin/teams/<int:team_id>/members/<user_id>', methods=['DELETE'])
 @admin_required
 def kick_team_member(team_id, user_id):

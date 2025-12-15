@@ -1134,6 +1134,16 @@ class MemberNote:
         return execute_with_retry(_exec)
 
     @staticmethod
+    def delete_by_user_id(team_id, user_id):
+        """删除指定Team中指定user_id的成员记录"""
+        def _exec():
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM member_notes WHERE team_id = ? AND user_id = ?', (team_id, user_id))
+                return cursor.rowcount > 0
+        return execute_with_retry(_exec)
+
+    @staticmethod
     def delete_not_in(team_id, user_ids):
         """删除指定Team中不在 user_ids 列表中的成员"""
         if not user_ids:
