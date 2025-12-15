@@ -1137,10 +1137,16 @@ def kick_team_member(team_id, user_id):
         return jsonify({"success": False, "error": result.get('error')}), 500
 
 
-@app.route('/api/admin/teams/<int:team_id>/invitations/<email>', methods=['DELETE'])
+@app.route('/api/admin/teams/<int:team_id>/invitations', methods=['DELETE'])
 @admin_required
-def cancel_team_invitation(team_id, email):
+def cancel_team_invitation(team_id):
     """取消/撤销邀请"""
+    data = request.get_json()
+    email = data.get('email_address')
+    
+    if not email:
+        return jsonify({"success": False, "error": "邮箱不能为空"}), 400
+
     team = Team.get_by_id(team_id)
     if not team:
         return jsonify({"success": False, "error": "Team 不存在"}), 404

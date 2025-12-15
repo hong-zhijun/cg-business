@@ -181,10 +181,14 @@
         if (!(await showConfirm(`确定要取消对 ${email} 的邀请吗？\n取消后将释放一个名额，且 OpenAI 侧的邀请链接也会失效。`))) return;
 
         try {
-            // 对邮箱进行 URL 编码
-            const encodedEmail = encodeURIComponent(email);
-            const response = await fetch(`/api/admin/teams/${currentTeamId}/invitations/${encodedEmail}`, {
+            const response = await fetch(`/api/admin/teams/${currentTeamId}/invitations`, {
                 method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email_address: email,
+                }),
             });
 
             const data = await response.json();
