@@ -693,12 +693,7 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        if (data.deleted_count > 0) {
-                            const teamList = data.deleted_teams.join("\n- ");
-                            alert(`✅ ${data.message}\n\n已删除的Team：\n- ${teamList}`);
-                        } else {
-                            alert("✅ " + data.message);
-                        }
+                        showToast(data.message);
                         loadTeams();
                     } else {
                         alert("错误: " + data.error);
@@ -770,7 +765,7 @@
                         const data = await response.json();
 
                         if (data.success) {
-                            alert("✅ 备注保存成功！");
+                            showToast("备注保存成功！");
                             loadTeams();
                         } else {
                             alert("错误: " + data.error);
@@ -869,7 +864,7 @@
                             });
 
                             await navigator.clipboard.writeText(clipboardText);
-                            alert(`✅ 已为 "${teamName}" 生成 ${count} 个${isTemp ? "1日试用" : "永久"}邀请码！\n\n邀请码已按格式复制到剪贴板。`);
+                            showToast(`已为 "${teamName}" 生成 ${count} 个${isTemp ? "1日试用" : "永久"}邀请码并复制到剪贴板`);
                             // 如果邀请码列表已加载，刷新它
                             if (typeof keysLoaded !== "undefined" && keysLoaded) {
                                 loadKeys();
@@ -898,22 +893,77 @@
             function closeSourcesModal() {
                 document.getElementById("sourcesModal").style.display = "none";
             }
-            // 系统配置弹窗控制
+            // Toast 提示函数
+            function showToast(message, type = "success") {
+                let container = document.getElementById("toast-container");
+                if (!container) {
+                    container = document.createElement("div");
+                    container.id = "toast-container";
+                    container.className = "fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none";
+                    document.body.appendChild(container);
+                }
+
+                const toast = document.createElement("div");
+                toast.className = `px-6 py-3 rounded-lg shadow-lg text-white text-sm font-medium transition-all transform translate-y-4 opacity-0 pointer-events-auto flex items-center shadow-xl ${
+                    type === "error" ? "bg-red-500" : "bg-green-500"
+                }`;
+                toast.innerHTML =
+                    type === "error"
+                        ? `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${message}`
+                        : `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>${message}`;
+
+                container.appendChild(toast);
+
+                // 动画显示
+                requestAnimationFrame(() => {
+                    toast.classList.remove("translate-y-4", "opacity-0");
+                });
+
+                setTimeout(() => {
+                    toast.classList.add("opacity-0", "-translate-y-4");
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
             async function openSystemConfigModal() {
                 try {
                     const response = await fetch("/api/admin/system-config");
                     const data = await response.json();
                     if (data.success) {
-                        const config = data.config.find((c) => c.key === "team_popup_content");
-                        if (config) {
-                            document.getElementById("teamPopupContent").value = config.value;
+                        // Team 弹窗内容
+                        const popupConfig = data.config.find((c) => c.key === "team_popup_content");
+                        if (popupConfig) {
+                            document.getElementById("teamPopupContent").value = popupConfig.value;
                         }
-                        document.getElementById("systemConfigModal").style.display = "block";
+                        // Bark 配置
+                        const barkServerConfig = data.config.find((c) => c.key === "bark_server");
+                        if (barkServerConfig) {
+                            document.getElementById("barkServer").value = barkServerConfig.value || "https://api.day.app";
+                        }
+                        const barkKeyConfig = data.config.find((c) => c.key === "bark_key");
+                        if (barkKeyConfig) {
+                            document.getElementById("barkKey").value = barkKeyConfig.value;
+                        }
+
+                        // 满员预警配置
+                        const warningEnabledConfig = data.config.find((c) => c.key === "team_full_warning_enabled");
+                        const warningEnabled = warningEnabledConfig && warningEnabledConfig.value === "true";
+                        document.getElementById("teamFullWarningEnabled").checked = warningEnabled;
+
+                        const warningTemplateConfig = data.config.find((c) => c.key === "team_full_warning_template");
+                        if (warningTemplateConfig) {
+                            document.getElementById("teamFullWarningTemplate").value = warningTemplateConfig.value;
+                        }
+
+                        // 控制模板输入框显示
+                        document.getElementById("warningTemplateGroup").style.display = warningEnabled ? "block" : "none";
+
+                        document.getElementById("systemConfigModal").style.display = "flex";
                     } else {
-                        alert("获取配置失败: " + (data.error || "未知错误"));
+                        showToast("获取配置失败: " + (data.error || "未知错误"), "error");
                     }
                 } catch (error) {
-                    alert("获取配置失败: " + error.message);
+                    showToast("获取配置失败: " + error.message, "error");
                 }
             }
 
@@ -923,6 +973,11 @@
 
             async function saveSystemConfig() {
                 const content = document.getElementById("teamPopupContent").value;
+                const barkServer = document.getElementById("barkServer").value;
+                const barkKey = document.getElementById("barkKey").value;
+                const warningEnabled = document.getElementById("teamFullWarningEnabled").checked;
+                const warningTemplate = document.getElementById("teamFullWarningTemplate").value;
+
                 try {
                     const response = await fetch("/api/admin/system-config", {
                         method: "POST",
@@ -931,17 +986,100 @@
                         },
                         body: JSON.stringify({
                             team_popup_content: content,
+                            bark_server: barkServer,
+                            bark_key: barkKey,
+                            team_full_warning_enabled: warningEnabled ? "true" : "false",
+                            team_full_warning_template: warningTemplate,
                         }),
                     });
                     const data = await response.json();
                     if (data.success) {
-                        alert("配置已保存");
+                        showToast("配置已保存");
                         closeSystemConfigModal();
                     } else {
-                        alert("保存失败: " + (data.error || "未知错误"));
+                        showToast("保存失败: " + (data.error || "未知错误"), "error");
                     }
                 } catch (error) {
-                    alert("保存失败: " + error.message);
+                    showToast("保存失败: " + error.message, "error");
+                }
+            }
+
+            // 监听满员预警开关变化
+            document.addEventListener("DOMContentLoaded", function () {
+                const warningToggle = document.getElementById("teamFullWarningEnabled");
+                if (warningToggle) {
+                    warningToggle.addEventListener("change", function () {
+                        document.getElementById("warningTemplateGroup").style.display = this.checked ? "block" : "none";
+                    });
+                }
+            });
+
+            async function testBark() {
+                const server = document.getElementById("barkServer").value;
+                const key = document.getElementById("barkKey").value;
+
+                if (!key) {
+                    showToast("请先填写 Bark Key", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/api/admin/test-bark", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            server: server,
+                            key: key,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("测试消息发送成功，请检查手机通知");
+                    } else {
+                        showToast("发送失败: " + (data.error || "未知错误"), "error");
+                    }
+                } catch (error) {
+                    showToast("发送请求失败: " + error.message, "error");
+                }
+            }
+
+            async function testTeamFullWarning() {
+                const server = document.getElementById("barkServer").value;
+                const key = document.getElementById("barkKey").value;
+                const template = document.getElementById("teamFullWarningTemplate").value;
+
+                if (!key) {
+                    showToast("请先填写 Bark Key", "error");
+                    return;
+                }
+
+                if (!template) {
+                    showToast("请先填写预警消息模板", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/api/admin/test-team-full-warning", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            server: server,
+                            key: key,
+                            template: template,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast(data.message);
+                    } else {
+                        showToast("发送失败: " + (data.error || "未知错误"), "error");
+                    }
+                } catch (error) {
+                    showToast("发送请求失败: " + error.message, "error");
                 }
             }
         </script>
@@ -974,6 +1112,67 @@
 
                 <!-- 内容 -->
                 <div class="space-y-4">
+                    <!-- Bark 配置 -->
+                    <div class="border-b border-gray-100 pb-4 mb-4">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Bark 通知设置</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="barkServer" class="block text-sm font-medium text-gray-700 mb-1">Bark 服务器地址</label>
+                                <input
+                                    type="text"
+                                    id="barkServer"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                    placeholder="https://api.day.app" />
+                            </div>
+                            <div>
+                                <label for="barkKey" class="block text-sm font-medium text-gray-700 mb-1">Bark Key</label>
+                                <div class="flex gap-2">
+                                    <input
+                                        type="text"
+                                        id="barkKey"
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                        placeholder="您的 Bark Key" />
+                                    <button
+                                        onclick="testBark()"
+                                        class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
+                                        测试
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 满员预警配置 -->
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div>
+                                    <label for="teamFullWarningEnabled" class="block text-sm font-medium text-gray-900">开启 Team 满员预警</label>
+                                    <p class="text-xs text-gray-500 mt-0.5">当 Team 成员数(含管理员)达到 5 人时触发通知</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="teamFullWarningEnabled" class="sr-only peer" />
+                                    <div
+                                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div id="warningTemplateGroup" class="mt-2" style="display: none">
+                                <label for="teamFullWarningTemplate" class="block text-sm font-medium text-gray-700 mb-1">预警消息模板</label>
+                                <div class="flex gap-2">
+                                    <input
+                                        type="text"
+                                        id="teamFullWarningTemplate"
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                        placeholder="Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}" />
+                                    <button
+                                        onclick="testTeamFullWarning()"
+                                        class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
+                                        测试
+                                    </button>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">支持变量: {team_name}, {current_count}, {email}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label for="teamPopupContent" class="block text-sm font-medium text-gray-700 mb-1">Team页面弹窗内容 (支持HTML)</label>
                         <textarea

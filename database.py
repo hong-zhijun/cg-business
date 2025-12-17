@@ -289,7 +289,11 @@ def init_db():
             ('mail_sender_name', 'ChatGPT Team Admin', '发件人显示名称'),
             ('mail_use_ssl', 'true', '是否使用 SSL (true/false)'),
             ('mail_enabled', 'false', '是否启用邮件功能 (true/false)'),
-            ('mail_template_export_tutorial', '<h2>ChatGPT Team 使用教程</h2><p>您好，</p><p>欢迎加入我们的 Team！以下是导出数据的详细教程...</p>', '导出教程邮件模板')
+            ('mail_template_export_tutorial', '<h2>ChatGPT Team 使用教程</h2><p>您好，</p><p>欢迎加入我们的 Team！以下是导出数据的详细教程...</p>', '导出教程邮件模板'),
+            ('bark_server', 'https://api.day.app', 'Bark 服务器地址'),
+            ('bark_key', '', 'Bark Key'),
+            ('team_full_warning_enabled', 'false', '是否开启满员预警 (true/false)'),
+            ('team_full_warning_template', 'Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}', '满员预警消息模板'),
         ]
 
         for key, value, desc in default_configs:

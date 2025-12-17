@@ -1276,6 +1276,42 @@ def admin_invite_member(team_id):
         # 2. 检查人数
         if current_count >= 4:
             return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+
+        # ========== 满员预警逻辑开始 ==========
+        # 检查是否开启预警，且当前人数为3（加上本次邀请即满员）
+        warning_enabled = SystemConfig.get('team_full_warning_enabled') == 'true'
+        if warning_enabled and current_count == 3:
+            try:
+                # 获取配置
+                bark_server = SystemConfig.get('bark_server', 'https://api.day.app').rstrip('/')
+                bark_key = SystemConfig.get('bark_key', '')
+                template = SystemConfig.get('team_full_warning_template', 'Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}')
+                
+                if bark_server and bark_key:
+                    # 替换模板变量
+                    message = template.format(
+                        team_name=team['name'],
+                        current_count=current_count,
+                        email=email
+                    )
+                    
+                    # 发送推送
+                    from urllib.parse import quote
+                    title = quote("ChatGPT Team 满员预警")
+                    content = quote(message)
+                    
+                    # 使用线程异步发送，避免阻塞邀请流程
+                    def send_warning():
+                        try:
+                            url = f"{bark_server}/{bark_key}/{title}/{content}"
+                            cf_requests.get(url, impersonate="chrome110")
+                        except Exception as e:
+                            print(f"Warning push failed: {str(e)}")
+                    
+                    threading.Thread(target=send_warning, daemon=True).start()
+            except Exception as e:
+                print(f"Error in team warning logic: {str(e)}")
+        # ========== 满员预警逻辑结束 ==========
             
         # 3. 检查邮箱
         member_emails = [m.get('email', '').lower() for m in members]
@@ -1948,6 +1984,89 @@ def update_system_config():
                  SystemConfig.set(key, value)
 
         return jsonify({"success": True, "message": "配置已保存"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/test-bark', methods=['POST'])
+@admin_required
+def test_bark():
+    """测试 Bark 消息发送"""
+    data = request.json
+    server = data.get('server', '').rstrip('/')
+    key = data.get('key', '')
+    
+    if not server or not key:
+        return jsonify({"success": False, "error": "请提供服务器地址和 Key"}), 400
+        
+    try:
+        # 对中文内容进行 URL 编码
+        from urllib.parse import quote
+        title = quote("ChatGPT Team 通知")
+        content = quote("测试消息发送成功")
+        
+        url = f"{server}/{key}/{title}/{content}"
+        response = cf_requests.get(url, impersonate="chrome110")
+        
+        if response.status_code == 200:
+            return jsonify({"success": True, "message": "发送成功"})
+        else:
+            return jsonify({"success": False, "error": f"服务器返回错误: {response.status_code}"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/test-team-full-warning', methods=['POST'])
+@admin_required
+def test_team_full_warning():
+    """测试满员预警消息发送"""
+    data = request.json
+    server = data.get('server', '').rstrip('/')
+    key = data.get('key', '')
+    template = data.get('template', '')
+    
+    if not server or not key:
+        return jsonify({"success": False, "error": "请先配置并填写 Bark 服务器地址和 Key"}), 400
+    
+    if not template:
+        return jsonify({"success": False, "error": "请填写预警消息模板"}), 400
+        
+    try:
+        # 获取一个随机 Team 用于测试
+        teams = Team.get_all()
+        if teams:
+            import random
+            team = random.choice(teams)
+            team_name = team['name']
+            current_count = team['member_count']
+        else:
+            team_name = "测试Team"
+            current_count = 3
+            
+        email = "test_user@example.com"
+        
+        # 替换模板变量
+        try:
+            message = template.format(
+                team_name=team_name,
+                current_count=current_count,
+                email=email
+            )
+        except Exception as e:
+            return jsonify({"success": False, "error": f"模板格式错误: {str(e)}"}), 400
+        
+        # 发送推送
+        from urllib.parse import quote
+        title = quote("ChatGPT Team 满员预警(测试)")
+        content = quote(message)
+        
+        url = f"{server}/{key}/{title}/{content}"
+        response = cf_requests.get(url, impersonate="chrome110")
+        
+        if response.status_code == 200:
+            return jsonify({"success": True, "message": f"测试消息已发送 (模拟Team: {team_name})"})
+        else:
+            return jsonify({"success": False, "error": f"服务器返回错误: {response.status_code}"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

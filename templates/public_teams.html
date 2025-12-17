@@ -489,7 +489,7 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        alert("邀请成功！");
+                        showToast("邀请成功！");
                         closeModal("inviteModal");
                         // 刷新列表以更新人数
                         refreshTeams();
@@ -636,7 +636,7 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        alert("✅ " + data.message);
+                        showToast(data.message);
                         document.getElementById("tutorialEmail").value = ""; // 清空输入框
                     } else {
                         alert("❌ " + data.error);
@@ -678,6 +678,37 @@
                 // 设置下次显示时间为24小时后
                 const nextShow = now.getTime() + 24 * 60 * 60 * 1000;
                 localStorage.setItem(key, nextShow);
+            }
+
+            function showToast(message, type = "success") {
+                let container = document.getElementById("toast-container");
+                if (!container) {
+                    container = document.createElement("div");
+                    container.id = "toast-container";
+                    container.className = "fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none";
+                    document.body.appendChild(container);
+                }
+
+                const toast = document.createElement("div");
+                toast.className = `px-6 py-3 rounded-lg shadow-lg text-white text-sm font-medium transition-all transform translate-y-4 opacity-0 pointer-events-auto flex items-center shadow-xl ${
+                    type === "error" ? "bg-red-500" : "bg-green-500"
+                }`;
+                toast.innerHTML =
+                    type === "error"
+                        ? `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${message}`
+                        : `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>${message}`;
+
+                container.appendChild(toast);
+
+                // 动画显示
+                requestAnimationFrame(() => {
+                    toast.classList.remove("translate-y-4", "opacity-0");
+                });
+
+                setTimeout(() => {
+                    toast.classList.add("opacity-0", "-translate-y-4");
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
             }
         </script>
     </body>
