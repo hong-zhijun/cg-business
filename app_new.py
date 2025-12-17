@@ -1921,6 +1921,49 @@ def test_mail():
         return jsonify({"success": False, "error": f"发送失败: {message}"}), 500
 
 
+@app.route('/api/admin/system-config', methods=['GET'])
+@admin_required
+def get_system_config():
+    """获取系统配置"""
+    configs = SystemConfig.get_all_with_desc()
+    return jsonify({"success": True, "config": configs})
+
+
+@app.route('/api/admin/system-config', methods=['POST'])
+@admin_required
+def update_system_config():
+    """更新系统配置"""
+    data = request.json
+    try:
+        # data should be a dict of key-value pairs
+        # e.g. {"team_popup_content": "..."}
+        # Use set_bulk to update multiple configs at once if needed, 
+        # or loop through data and call SystemConfig.set
+        
+        # Check if SystemConfig has set_bulk
+        if hasattr(SystemConfig, 'set_bulk'):
+             SystemConfig.set_bulk(data)
+        else:
+             for key, value in data.items():
+                 SystemConfig.set(key, value)
+
+        return jsonify({"success": True, "message": "配置已保存"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/public/system-config', methods=['GET'])
+def get_public_system_config():
+    """获取公开系统配置"""
+    # Only return specific public configs to avoid leaking sensitive info
+    public_keys = ['team_popup_content']
+    configs = {}
+    for key in public_keys:
+        configs[key] = SystemConfig.get(key)
+    return jsonify({"success": True, "config": configs})
+
+
+
 # ================== 公开 Team 页面路由 ==================
 
 @app.route('/team')

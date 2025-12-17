@@ -211,11 +211,7 @@
                     </button>
                 </div>
                 <div class="text-gray-700 mb-6 space-y-1 text-base">
-                    <p>！！！劳烦各位拉了人进组之后点一下刷新，确定进组了。</p>
-                    <p>（不刷新数据没同步可能导致超员）</p>
-                    <p>刷新之后没有来源找我改一下。</p>
-                    <p>！！！没有来源的账号我会踢出去</p>
-                    <p>！！！发现有超过5个的组，请立刻联系我。</p>
+                    <!-- Content will be loaded dynamically -->
                 </div>
                 <div class="flex justify-end gap-3">
                     <button
@@ -655,14 +651,23 @@
             }
 
             // 每日提示相关逻辑
-            function checkDailyNotice() {
+            async function checkDailyNotice() {
                 const key = "daily_notice_next_show";
                 const nextShow = localStorage.getItem(key);
                 const now = new Date().getTime();
 
                 // 如果没有记录，或者当前时间超过了下次显示时间，则显示
                 if (!nextShow || now > parseInt(nextShow)) {
-                    openModal("dailyNoticeModal");
+                    try {
+                        const response = await fetch("/api/public/system-config");
+                        const data = await response.json();
+                        if (data.success && data.config.team_popup_content) {
+                            document.querySelector("#dailyNoticeModal .text-gray-700").innerHTML = data.config.team_popup_content;
+                            openModal("dailyNoticeModal");
+                        }
+                    } catch (e) {
+                        console.error("Failed to load daily notice", e);
+                    }
                 }
             }
 

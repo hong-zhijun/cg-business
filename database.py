@@ -277,6 +277,11 @@ def init_db():
 
         # 初始化默认配置 (邮件相关)
         default_configs = [
+            ('team_popup_content', """<p>！！！劳烦各位拉了人进组之后点一下刷新，确定进组了。</p>
+<p>（不刷新数据没同步可能导致超员）</p>
+<p>刷新之后没有来源找我改一下。</p>
+<p>！！！没有来源的账号我会踢出去</p>
+<p>！！！发现有超过5个的组，请立刻联系我。</p>""", 'Team页面弹窗内容'),
             ('mail_smtp_server', '', 'SMTP 服务器地址 (如 smtp.qq.com)'),
             ('mail_smtp_port', '465', 'SMTP 端口 (SSL通常为465, TLS通常为587)'),
             ('mail_smtp_user', '', 'SMTP 用户名/邮箱'),
