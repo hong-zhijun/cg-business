@@ -1,0 +1,158 @@
+<!-- 邀请记录 弹窗 (公开版) -->
+<div
+    id="invitationsModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center hidden">
+    <div
+        class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-8 w-full max-w-7xl mx-4 transition-all transform h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-6 flex-shrink-0">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                邀请记录
+            </h2>
+            <button onclick="closeModal('invitationsModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="invitationsList" class="overflow-y-auto flex-1 pr-2">加载中...</div>
+    </div>
+</div>
+
+<script>
+    function openInvitationsModal() {
+        openModal("invitationsModal");
+        loadInvitations();
+    }
+
+    async function loadInvitations() {
+        // 使用全局变量 currentAuth
+        if (!currentAuth) {
+            alert("请先登录");
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/public/invitations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(currentAuth),
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                displayInvitations(data.invitations);
+            } else {
+                document.getElementById("invitationsList").innerHTML = `<p class="text-red-500 text-sm italic">加载失败: ${data.error}</p>`;
+            }
+        } catch (error) {
+            console.error("加载邀请记录失败:", error);
+            document.getElementById("invitationsList").innerHTML = '<p class="text-red-500 text-sm italic">加载出错</p>';
+        }
+    }
+
+    // 格式化UTC时间为本地时间
+    function formatUtcTime(dateStr) {
+        if (!dateStr) return "-";
+        try {
+            let isoStr = dateStr;
+            if (!dateStr.includes("T") && !dateStr.includes("Z")) {
+                isoStr = dateStr.replace(" ", "T") + "Z";
+            }
+            const date = new Date(isoStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleString("zh-CN");
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    function displayInvitations(invitations) {
+        const container = document.getElementById("invitationsList");
+
+        if (invitations.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm italic">暂无邀请记录</p>';
+            return;
+        }
+
+        let html = `
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">来源</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">过期时间</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">`;
+
+        invitations.forEach((inv) => {
+            const isTemp = inv.is_temp;
+            const isConfirmed = inv.is_confirmed;
+            const expireAt = inv.temp_expire_at;
+            const invStatus = inv.status === "success" ? "success" : "failed";
+            const source = inv.source || "-";
+
+            // 修正过期判定: 视为UTC
+            let isExpired = false;
+            if (expireAt) {
+                const isoStr = !expireAt.includes("T") && !expireAt.includes("Z") ? expireAt.replace(" ", "T") + "Z" : expireAt;
+                isExpired = new Date(isoStr) < new Date();
+            }
+
+            html += `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 whitespace-nowrap text-gray-500">${formatUtcTime(inv.created_at)}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-900 font-medium">${inv.team_name}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-500">${inv.email}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    ${
+                        source !== "-"
+                            ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">${source}</span>`
+                            : '<span class="text-gray-400">-</span>'
+                    }
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex flex-col gap-1">
+                        ${
+                            isTemp
+                                ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 w-fit">1日试用</span>'
+                                : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 w-fit">永久</span>'
+                        }
+                        ${
+                            isTemp && isConfirmed
+                                ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 w-fit">已确认</span>'
+                                : ""
+                        }
+                    </div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-500">
+                    ${formatUtcTime(expireAt)}
+                    ${
+                        isExpired
+                            ? '<br><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">已过期</span>'
+                            : ""
+                    }
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    ${
+                        invStatus === "success"
+                            ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">成功</span>'
+                            : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">失败</span>'
+                    }
+                </td>
+            </tr>
+        `;
+        });
+
+        html += "</tbody></table></div>";
+        container.innerHTML = html;
+    }
+</script>

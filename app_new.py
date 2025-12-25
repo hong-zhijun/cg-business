@@ -2665,6 +2665,40 @@ def health():
     return jsonify({"status": "ok"})
 
 
+@app.route('/api/public/invitations', methods=['POST'])
+def public_get_invitations():
+    """获取所有邀请记录 (需账号密码验证)"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    try:
+        invitations = Invitation.get_all()
+        # 过滤敏感信息
+        safe_invitations = []
+        for inv in invitations:
+            safe_invitations.append({
+                "id": inv["id"],
+                "created_at": inv["created_at"],
+                "team_name": inv["team_name"],
+                "email": inv["email"],
+                "source": inv.get("source"),
+                "is_temp": inv["is_temp"],
+                "is_confirmed": inv["is_confirmed"],
+                "temp_expire_at": inv["temp_expire_at"],
+                "status": inv["status"]
+            })
+
+        return jsonify({"success": True, "invitations": safe_invitations})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 if __name__ == '__main__':
     print(f"🚀 ChatGPT Team 自动邀请系统启动")
     print(f"📍 管理员后台: http://{HOST}:{PORT}/admin")
