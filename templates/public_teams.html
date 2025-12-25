@@ -184,6 +184,7 @@
                 </div>
                 <div class="p-0 overflow-y-auto flex-1 bg-gray-50">
                     <input type="hidden" id="currentTeamId" />
+                    <input type="hidden" id="currentTeamAllowManage" />
                     <div id="membersListBody" class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- 动态加载 -->
                     </div>
@@ -372,6 +373,11 @@
                         if (joinedCount >= 4) joinedColor = "bg-red-500";
                         else if (joinedCount === 3) joinedColor = "bg-orange-500";
 
+                        // 管理权限标识
+                        const manageBadge = team.allow_public_manage
+                            ? `<span title="开放管理权限" class="ml-1 text-blue-600 cursor-help"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span>`
+                            : "";
+
                         // 生成4格进度条 HTML
                         let barsHtml = "";
                         for (let i = 0; i < 4; i++) {
@@ -390,8 +396,11 @@
                 <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden flex flex-col">
                     <div class="p-5 flex-1">
                         <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 truncate pr-2" title="${team.name}">${team.name}</h3>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-bold text-gray-900 truncate pr-2 flex items-center" title="${team.name}">
+                                    <span class="truncate">${team.name}</span>
+                                    ${manageBadge}
+                                </h3>
                                 <p class="text-xs text-gray-500 mt-1 truncate max-w-[200px]" title="${team.email || ""}">${
                             team.email || "未设置邮箱"
                         }</p>
@@ -435,7 +444,7 @@
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                             邀请
                         </button>
-                        <button onclick="openMembersModal(${team.id}, '${team.name}')"
+                        <button onclick="openMembersModal(${team.id}, '${team.name}', ${team.allow_public_manage})"
                             class="flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                             查看成员
@@ -505,9 +514,10 @@
             }
 
             // 查看成员相关
-            async function openMembersModal(teamId, teamName) {
+            async function openMembersModal(teamId, teamName, allowManage) {
                 document.getElementById("membersModalTitle").innerText = `${teamName} - 成员列表`;
                 document.getElementById("currentTeamId").value = teamId;
+                document.getElementById("currentTeamAllowManage").value = allowManage ? "true" : "false";
                 const tbody = document.getElementById("membersListBody");
                 const loading = document.getElementById("membersLoading");
 
@@ -521,6 +531,7 @@
             async function loadMembers(teamId) {
                 const tbody = document.getElementById("membersListBody");
                 const loading = document.getElementById("membersLoading");
+                const allowManage = document.getElementById("currentTeamAllowManage").value === "true";
 
                 try {
                     const response = await fetch(`/api/public/teams/${teamId}/members`, {
@@ -536,11 +547,29 @@
                             tbody.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">暂无成员</div>';
                         } else {
                             tbody.innerHTML = data.members
-                                .map(
-                                    (m) => `
+                                .map((m) => {
+                                    let actionBtn = "";
+                                    if (allowManage) {
+                                        if (m.status === 2 && m.role !== "account-owner") {
+                                            actionBtn = `
+                                                    <button onclick="kickMember(${teamId}, '${m.user_id}', '${m.email}')" 
+                                                        class="ml-2 px-2 py-1 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50 transition-colors whitespace-nowrap">
+                                                        踢出
+                                                    </button>`;
+                                        } else if (m.status === 1) {
+                                            actionBtn = `
+                                                    <button onclick="revokeInvite(${teamId}, '${m.email}')" 
+                                                        class="ml-2 px-2 py-1 text-xs font-medium text-orange-600 border border-orange-200 rounded hover:bg-orange-50 transition-colors whitespace-nowrap">
+                                                        撤销
+                                                    </button>`;
+                                        }
+                                    }
+
+                                    return `
                             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-2">
                                 <div class="flex justify-between items-start">
-                                    <div class="font-medium text-gray-900 truncate pr-2 w-full" title="${m.email}">${m.email}</div>
+                                    <div class="font-medium text-gray-900 truncate pr-2 flex-1" title="${m.email}">${m.email}</div>
+                                    ${actionBtn}
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2 mt-1">
                                     <span class="px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -565,8 +594,8 @@
                                     加入时间: ${m.created ? formatDate(m.created * 1000) : "-"}
                                 </div>
                             </div>
-                        `
-                                )
+                        `;
+                                })
                                 .join("");
                         }
                     } else {
@@ -647,6 +676,66 @@
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+                }
+            }
+
+            // 踢出成员
+            async function kickMember(teamId, userId, email) {
+                if (!confirm(`确定要踢出成员 ${email} 吗？\n踢出后对方将失去 Team 访问权限。`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/kick`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...currentAuth,
+                            user_id: userId,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("成员已踢出");
+                        await loadMembers(teamId);
+                        refreshTeams(); // 更新人数
+                    } else {
+                        alert("踢出失败: " + (data.error || "未知错误"));
+                    }
+                } catch (e) {
+                    alert("请求出错: " + e.message);
+                }
+            }
+
+            // 撤销邀请
+            async function revokeInvite(teamId, email) {
+                if (!confirm(`确定要撤销对 ${email} 的邀请吗？`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/revoke`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...currentAuth,
+                            email: email,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("邀请已撤销");
+                        await loadMembers(teamId);
+                        refreshTeams(); // 更新人数
+                    } else {
+                        alert("撤销失败: " + (data.error || "未知错误"));
+                    }
+                } catch (e) {
+                    alert("请求出错: " + e.message);
                 }
             }
 

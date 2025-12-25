@@ -108,6 +108,11 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # 字段已存在
 
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN allow_public_manage BOOLEAN DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
         # Access Keys 表 (重构: 每个邀请码对应一个 Team)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS access_keys (
@@ -307,15 +312,15 @@ def init_db():
 
 class Team:
     @staticmethod
-    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False):
+    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False, allow_public_manage=False):
         """创建新 Team（不自动生成密钥,需要手动生成）"""
         with get_db() as conn:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (name, account_id, access_token, organization_id, email, is_public))
+                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public, allow_public_manage)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (name, account_id, access_token, organization_id, email, is_public, allow_public_manage))
             team_id = cursor.lastrowid
 
             return team_id
@@ -361,7 +366,7 @@ class Team:
             ''', (access_token, team_id))
 
     @staticmethod
-    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None):
+    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None, allow_public_manage=None):
         """更新 Team 的完整信息"""
         with get_db() as conn:
             cursor = conn.cursor()
@@ -384,6 +389,9 @@ class Team:
             if is_public is not None:
                 updates.append('is_public = ?')
                 params.append(is_public)
+            if allow_public_manage is not None:
+                updates.append('allow_public_manage = ?')
+                params.append(allow_public_manage)
 
             if updates:
                 updates.append('updated_at = CURRENT_TIMESTAMP')

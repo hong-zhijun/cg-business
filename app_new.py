@@ -1,4 +1,4 @@
-﻿"""
+"""
 ChatGPT Team 自动邀请系统 - 主应用
 """
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
@@ -648,12 +648,21 @@ def update_team_note(team_id):
 @app.route('/api/admin/teams/<int:team_id>/public', methods=['PUT'])
 @admin_required
 def update_team_public_status(team_id):
-    """更新 Team 的公开状态"""
+    """更新 Team 的公开状态和管理权限"""
     data = request.json
-    is_public = data.get('is_public', False)
+    is_public = data.get('is_public')
+    allow_public_manage = data.get('allow_public_manage')
     
     try:
-        Team.update_team_info(team_id, is_public=is_public)
+        kwargs = {}
+        if is_public is not None:
+            kwargs['is_public'] = is_public
+        if allow_public_manage is not None:
+            kwargs['allow_public_manage'] = allow_public_manage
+            
+        if kwargs:
+            Team.update_team_info(team_id, **kwargs)
+            
         return jsonify({"success": True, "message": "状态更新成功"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1074,6 +1083,128 @@ def refresh_members(team_id):
         return jsonify({"success": True, "message": "成员列表已刷新"})
     else:
         return jsonify(result), result.get('status_code', 500)
+
+
+@app.route('/api/public/teams/<int:team_id>/kick', methods=['POST'])
+def public_kick_member(team_id):
+    """公开端踢出成员 (需账号密码验证 + 权限检查)"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+    user_id = data.get('user_id')
+
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    if not user_id:
+        return jsonify({"success": False, "error": "缺少 user_id"}), 400
+
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+    
+    # 权限检查
+    if not team.get('allow_public_manage'):
+        return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
+
+    # 获取成员信息以获取 Email (用于日志和清理)
+    members_result = get_team_members(team['access_token'], team['account_id'], team_id)
+    member_email = 'unknown'
+    if members_result['success']:
+        member = next((m for m in members_result['members'] if m.get('id') == user_id), None)
+        if member:
+            member_email = member.get('email', 'unknown')
+    
+    # 执行踢人
+    result = kick_member(team['access_token'], team['account_id'], user_id)
+    
+    if result['success']:
+        # 清理本地数据
+        MemberNote.delete_by_user_id(team_id, user_id)
+        Invitation.delete_by_email(team_id, member_email)
+        
+        # 记录日志
+        KickLog.create(
+            team_id=team_id,
+            user_id=user_id,
+            email=member_email,
+            reason=f'Public用户({username})踢出',
+            success=True
+        )
+        
+        return jsonify({"success": True, "message": "成员已踢出"})
+    else:
+        KickLog.create(
+            team_id=team_id,
+            user_id=user_id,
+            email=member_email,
+            reason=f'Public用户({username})踢出',
+            success=False,
+            error_message=result.get('error')
+        )
+        return jsonify({"success": False, "error": result.get('error')}), 500
+
+
+@app.route('/api/public/teams/<int:team_id>/revoke', methods=['POST'])
+def public_revoke_invite(team_id):
+    """公开端撤销邀请 (需账号密码验证 + 权限检查)"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+    email = data.get('email', '').strip()
+
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    if not email:
+        return jsonify({"success": False, "error": "缺少 email"}), 400
+
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+    
+    # 权限检查
+    if not team.get('allow_public_manage'):
+        return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
+
+    # 撤销逻辑 (复用 Admin 逻辑)
+    invitation = Invitation.get_by_email(team_id, email)
+    
+    api_success = False
+    api_message = ""
+    
+    if invitation and invitation.get('invite_id'):
+        result = cancel_invite_from_openai(team['access_token'], team['account_id'], email)
+        if result['success']:
+            api_success = True
+            api_message = " (OpenAI API 同步撤销成功)"
+        else:
+            api_message = f" (OpenAI API 撤销失败: {result.get('error')})"
+    else:
+        # 尝试从 pending 列表查找
+        pending_result = get_pending_invites(team['access_token'], team['account_id'])
+        if pending_result['success']:
+            target_invite = next((inv for inv in pending_result.get('invites', []) 
+                                if inv.get('email_address', '').lower() == email.lower()), None)
+            if target_invite:
+                result = cancel_invite_from_openai(team['access_token'], team['account_id'], email)
+                if result['success']:
+                    api_success = True
+                    api_message = " (OpenAI API 同步撤销成功)"
+                else:
+                    api_message = f" (OpenAI API 撤销失败: {result.get('error')})"
+
+    # 删除本地记录
+    Invitation.delete_by_email(team_id, email)
+    
+    return jsonify({
+        "success": True, 
+        "message": f"邀请已取消{api_message}"
+    })
 
 
 @app.route('/api/admin/teams/<int:team_id>/members/<user_id>/note', methods=['PUT'])
