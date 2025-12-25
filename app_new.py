@@ -1,4 +1,4 @@
-"""
+﻿"""
 ChatGPT Team 自动邀请系统 - 主应用
 """
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
@@ -1211,6 +1211,50 @@ def cancel_team_invitation(team_id):
     })
 
 
+# ========== 满员预警逻辑封装 ==========
+def check_and_send_team_full_warning(team_name, current_count, email):
+    """
+    检查并发送Team满员预警
+    :param team_name: Team名称
+    :param current_count: 当前成员数
+    :param email: 新邀请的邮箱
+    """
+    # 检查是否开启预警，且当前人数为3（加上本次邀请即满员）
+    warning_enabled = SystemConfig.get('team_full_warning_enabled') == 'true'
+    if warning_enabled and current_count == 3:
+        try:
+            # 获取配置
+            bark_server = SystemConfig.get('bark_server', 'https://api.day.app').rstrip('/')
+            bark_key = SystemConfig.get('bark_key', '')
+            template = SystemConfig.get('team_full_warning_template', 'Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}')
+            
+            if bark_server and bark_key:
+                # 替换模板变量
+                message = template.format(
+                    team_name=team_name,
+                    current_count=current_count,
+                    email=email
+                )
+                
+                # 发送推送
+                from urllib.parse import quote
+                title = quote("ChatGPT Team 满员预警")
+                content = quote(message)
+                
+                # 使用线程异步发送，避免阻塞邀请流程
+                def send_warning():
+                    try:
+                        url = f"{bark_server}/{bark_key}/{title}/{content}"
+                        cf_requests.get(url, impersonate="chrome110")
+                    except Exception as e:
+                        print(f"Warning push failed: {str(e)}")
+                
+                threading.Thread(target=send_warning, daemon=True).start()
+        except Exception as e:
+            print(f"Error in team warning logic: {str(e)}")
+
+# ===================================
+
 @app.route('/api/admin/teams/<int:team_id>/invite', methods=['POST'])
 @admin_required
 def admin_invite_member(team_id):
@@ -1278,39 +1322,7 @@ def admin_invite_member(team_id):
             return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
 
         # ========== 满员预警逻辑开始 ==========
-        # 检查是否开启预警，且当前人数为3（加上本次邀请即满员）
-        warning_enabled = SystemConfig.get('team_full_warning_enabled') == 'true'
-        if warning_enabled and current_count == 3:
-            try:
-                # 获取配置
-                bark_server = SystemConfig.get('bark_server', 'https://api.day.app').rstrip('/')
-                bark_key = SystemConfig.get('bark_key', '')
-                template = SystemConfig.get('team_full_warning_template', 'Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}')
-                
-                if bark_server and bark_key:
-                    # 替换模板变量
-                    message = template.format(
-                        team_name=team['name'],
-                        current_count=current_count,
-                        email=email
-                    )
-                    
-                    # 发送推送
-                    from urllib.parse import quote
-                    title = quote("ChatGPT Team 满员预警")
-                    content = quote(message)
-                    
-                    # 使用线程异步发送，避免阻塞邀请流程
-                    def send_warning():
-                        try:
-                            url = f"{bark_server}/{bark_key}/{title}/{content}"
-                            cf_requests.get(url, impersonate="chrome110")
-                        except Exception as e:
-                            print(f"Warning push failed: {str(e)}")
-                    
-                    threading.Thread(target=send_warning, daemon=True).start()
-            except Exception as e:
-                print(f"Error in team warning logic: {str(e)}")
+        check_and_send_team_full_warning(team['name'], current_count, email)
         # ========== 满员预警逻辑结束 ==========
             
         # 3. 检查邮箱
@@ -2225,6 +2237,10 @@ def public_invite_member(team_id):
         # 3. 再次检查人数 (使用最新的实时数据)
         if current_count >= 4:
             return jsonify({"success": False, "error": "该 Team 已达到人数上限 (4人)"}), 400
+
+        # ========== 满员预警逻辑开始 (Public) ==========
+        check_and_send_team_full_warning(team['name'], current_count, email)
+        # ========== 满员预警逻辑结束 ==========
             
         # 4. 检查该邮箱是否已在此Team中 (实时数据)
         member_emails = [m.get('email', '').lower() for m in members]
