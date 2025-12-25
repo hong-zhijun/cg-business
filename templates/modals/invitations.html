@@ -41,6 +41,24 @@
         }
     }
 
+    // 格式化UTC时间为本地时间
+    function formatUtcTime(dateStr) {
+        if (!dateStr) return "-";
+        try {
+            // 假设后端返回的是UTC时间 (YYYY-MM-DD HH:MM:SS)，转换为本地时间
+            // 如果已经是ISO格式(带T)，则直接使用，否则替换空格并加Z
+            let isoStr = dateStr;
+            if (!dateStr.includes("T") && !dateStr.includes("Z")) {
+                isoStr = dateStr.replace(" ", "T") + "Z";
+            }
+            const date = new Date(isoStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleString("zh-CN");
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
     function displayInvitations(invitations) {
         const container = document.getElementById("invitationsList");
 
@@ -71,17 +89,26 @@
             const isConfirmed = inv.is_confirmed;
             const expireAt = inv.temp_expire_at;
             const invStatus = inv.status === "success" ? "success" : "failed";
-            const source = inv.source || '-';
+            const source = inv.source || "-";
 
-            const isExpired = expireAt && new Date(expireAt) < new Date();
+            // 修正过期判定: 视为UTC
+            let isExpired = false;
+            if (expireAt) {
+                const isoStr = !expireAt.includes("T") && !expireAt.includes("Z") ? expireAt.replace(" ", "T") + "Z" : expireAt;
+                isExpired = new Date(isoStr) < new Date();
+            }
 
             html += `
             <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-3 whitespace-nowrap text-gray-500">${new Date(inv.created_at).toLocaleString("zh-CN")}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-500">${formatUtcTime(inv.created_at)}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-gray-900 font-medium">${inv.team_name}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-gray-500">${inv.email}</td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                    ${source !== '-' ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">${source}</span>` : '<span class="text-gray-400">-</span>'}
+                    ${
+                        source !== "-"
+                            ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">${source}</span>`
+                            : '<span class="text-gray-400">-</span>'
+                    }
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex flex-col gap-1">
@@ -98,7 +125,7 @@
                     </div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-gray-500">
-                    ${expireAt ? new Date(expireAt).toLocaleString("zh-CN") : "-"}
+                    ${formatUtcTime(expireAt)}
                     ${
                         isExpired
                             ? '<br><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">已过期</span>'
@@ -140,7 +167,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showToast(data.message);
                 loadInvitations();
             } else {
                 alert("错误: " + data.error);

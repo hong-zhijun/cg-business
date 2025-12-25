@@ -71,7 +71,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert("Token 更新成功！");
+                showToast("Token 更新成功！");
                 closeModal("updateTokenModal");
                 loadTeams();
             } else {

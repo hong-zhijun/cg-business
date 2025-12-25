@@ -79,7 +79,7 @@
         e.preventDefault();
 
         if (isInviting) {
-            alert("正在邀请中，请稍候...");
+            showToast("正在邀请中，请稍候...");
             return;
         }
 
@@ -109,7 +109,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showToast(data.message);
                 document.getElementById("inviteMemberForm").reset();
                 closeModal("inviteMemberModal");
                 loadTeams();

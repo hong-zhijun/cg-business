@@ -200,7 +200,7 @@
 
             const data = await response.json();
             if (data.success) {
-                alert("✅ 配置已保存");
+                showToast("✅ 配置已保存");
                 closeModal("mailConfigModal");
             } else {
                 alert("保存失败: " + data.error);

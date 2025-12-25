@@ -167,7 +167,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert("成员已踢出");
+                showToast("成员已踢出");
                 await refreshMembers();
             } else {
                 alert("错误: " + data.error);
@@ -217,7 +217,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showToast(data.message);
                 await refreshMembers();
             } else {
                 alert("错误: " + data.error);

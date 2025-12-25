@@ -54,7 +54,7 @@
         e.preventDefault();
 
         if (isKicking) {
-            alert("正在踢人中，请稍候...");
+            showToast("正在踢人中，请稍候...");
             return;
         }
 
@@ -83,7 +83,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showToast(data.message);
                 document.getElementById("manualKickForm").reset();
                 closeModal("manualKickModal");
                 loadKickLogs();

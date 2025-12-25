@@ -79,13 +79,13 @@
                     navigator.clipboard
                         .writeText(keyCodes)
                         .then(() => {
-                            alert(`✅ 成功生成 ${count} 个邀请码并已复制到剪贴板！`);
+                            showToast(`✅ 成功生成 ${count} 个邀请码并已复制到剪贴板！`);
                         })
                         .catch((err) => {
                             alert(`成功生成 ${count} 个邀请码，但复制失败: ${err}`);
                         });
                 } else {
-                    alert(`成功生成 ${count} 个邀请码！`);
+                    showToast(`成功生成 ${count} 个邀请码！`);
                 }
                 document.getElementById("createKeyForm").reset();
                 closeModal("createKeyModal");

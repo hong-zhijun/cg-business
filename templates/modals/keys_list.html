@@ -96,7 +96,7 @@
         let html = "";
 
         keys.forEach((key) => {
-            const teamInfo = key.team_name 
+            const teamInfo = key.team_name
                 ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     ${key.team_name}
@@ -186,7 +186,7 @@
         navigator.clipboard
             .writeText(keyCodes)
             .then(() => {
-                alert(`✅ 已复制 ${normalKeys.length} 个普通邀请码到剪贴板`);
+                showToast(`✅ 已复制 ${normalKeys.length} 个普通邀请码到剪贴板`);
             })
             .catch((err) => {
                 alert("❌ 复制失败: " + err);
@@ -206,7 +206,7 @@
         navigator.clipboard
             .writeText(keyCodes)
             .then(() => {
-                alert(`✅ 已复制 ${tempKeys.length} 个1日试用邀请码到剪贴板`);
+                showToast(`✅ 已复制 ${tempKeys.length} 个1日试用邀请码到剪贴板`);
             })
             .catch((err) => {
                 alert("❌ 复制失败: " + err);
@@ -224,7 +224,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert("邀请码已删除");
+                showToast("邀请码已删除");
                 loadKeys();
             } else {
                 alert("错误: " + data.error);

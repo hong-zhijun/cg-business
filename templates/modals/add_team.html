@@ -64,10 +64,10 @@
         navigator.clipboard
             .writeText("https://chatgpt.com/api/auth/session")
             .then(() => {
-                alert("session获取地址已复制到剪贴板");
+                showToast("session获取地址已复制到剪贴板");
             })
             .catch((err) => {
-                alert("复制失败: " + err);
+                showToast("复制失败: " + err, "error");
             });
     }
     async function addTeam(e) {
@@ -87,7 +87,7 @@
             const data = await response.json();
 
             if (data.success) {
-                alert("Team 添加成功！");
+                showToast("Team 添加成功！");
                 e.target.reset();
                 closeModal("addTeamModal");
                 loadTeams();
