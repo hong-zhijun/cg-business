@@ -1094,6 +1094,53 @@ class MemberNote:
             return [dict(row) for row in cursor.fetchall()]
 
     @staticmethod
+    def get_public_notes(page=1, per_page=10, search_email=None, source_filter=None):
+        """分页获取所有成员备注，支持邮箱搜索和来源过滤"""
+        offset = (page - 1) * per_page
+        
+        with get_db() as conn:
+            cursor = conn.cursor()
+            
+            # 构建基础查询
+            query = '''
+                SELECT mn.*, t.name as team_name 
+                FROM member_notes mn
+                LEFT JOIN teams t ON mn.team_id = t.id
+                WHERE 1=1
+            '''
+            params = []
+            
+            # 搜索条件
+            if search_email:
+                query += ' AND mn.email LIKE ?'
+                params.append(f'%{search_email}%')
+
+            # 来源过滤
+            if source_filter:
+                query += ' AND mn.source = ?'
+                params.append(source_filter)
+            
+            # 获取总数
+            count_query = f"SELECT COUNT(*) FROM ({query})"
+            cursor.execute(count_query, params)
+            total = cursor.fetchone()[0]
+            
+            # 分页查询
+            query += ' ORDER BY mn.join_time DESC LIMIT ? OFFSET ?'
+            params.extend([per_page, offset])
+            
+            cursor.execute(query, params)
+            items = [dict(row) for row in cursor.fetchall()]
+            
+            return {
+                'items': items,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'pages': (total + per_page - 1) // per_page
+            }
+
+    @staticmethod
     def update_note_and_source(team_id, user_id, note, source=None):
         def _exec():
             with get_db() as conn:

@@ -396,6 +396,38 @@ def join_team():
 
 # ==================== 管理员端路由 ====================
 
+@app.route('/api/public/my-clients', methods=['POST'])
+def get_my_clients():
+    """获取我的客户列表（分页+搜索）- 需验证身份并按来源过滤"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+    
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    page = data.get('page', 1)
+    per_page = data.get('per_page', 10)
+    search = data.get('search', '').strip()
+    
+    # 使用 user['name'] 作为 source_filter
+    result = MemberNote.get_public_notes(page, per_page, search, source_filter=user['name'])
+    
+    # 格式化时间 (参考其他接口的时区处理)
+    for item in result['items']:
+        # 尝试格式化 join_time，如果为空则使用 updated_at
+        join_ts = item.get('join_time')
+        if join_ts:
+            item['join_time_str'] = convert_to_beijing_time(join_ts)
+        else:
+            # 回退到 updated_at
+            item['join_time_str'] = convert_to_beijing_time(item.get('updated_at')) or '-'
+            
+    return jsonify({"success": True, "data": result})
+
+
 @app.route('/admin')
 def admin_page():
     """管理员页面"""
@@ -1087,11 +1119,12 @@ def refresh_members(team_id):
 
 @app.route('/api/public/teams/<int:team_id>/kick', methods=['POST'])
 def public_kick_member(team_id):
-    """公开端踢出成员 (需账号密码验证 + 权限检查)"""
+    """公开端踢出成员 (需账号密码验证 + 权限检查 + 来源校验)"""
     data = request.json
     username = data.get('username', '')
     password = data.get('password', '')
     user_id = data.get('user_id')
+    request_source = data.get('name', '')  # 前端传来的 source name
 
     # 验证账号
     user = Source.verify_user(username, password)
@@ -1108,6 +1141,17 @@ def public_kick_member(team_id):
     # 权限检查
     if not team.get('allow_public_manage'):
         return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
+
+    # 来源校验：检查被踢成员的 source 是否与当前操作者的 name 一致
+    member_note = MemberNote.get(team_id, user_id)
+    if not member_note:
+        # 如果 member_notes 里没有，可能是数据不同步，尝试去 invitations 找（虽然不太可能，因为踢人是基于 member_notes 列表的）
+        # 这里严格一点，找不到记录就不让踢，或者提示刷新
+        return jsonify({"success": False, "error": "未找到成员记录，请尝试刷新列表"}), 404
+    
+    member_source = member_note.get('source')
+    if member_source != request_source:
+        return jsonify({"success": False, "error": "不是你的客户"}), 403
 
     # 获取成员信息以获取 Email (用于日志和清理)
     members_result = get_team_members(team['access_token'], team['account_id'], team_id)
@@ -1149,11 +1193,12 @@ def public_kick_member(team_id):
 
 @app.route('/api/public/teams/<int:team_id>/revoke', methods=['POST'])
 def public_revoke_invite(team_id):
-    """公开端撤销邀请 (需账号密码验证 + 权限检查)"""
+    """公开端撤销邀请 (需账号密码验证 + 权限检查 + 来源校验)"""
     data = request.json
     username = data.get('username', '')
     password = data.get('password', '')
     email = data.get('email', '').strip()
+    request_source = data.get('name', '')  # 前端传来的 source name
 
     # 验证账号
     user = Source.verify_user(username, password)
@@ -1171,8 +1216,24 @@ def public_revoke_invite(team_id):
     if not team.get('allow_public_manage'):
         return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
 
-    # 撤销逻辑 (复用 Admin 逻辑)
+    # 来源校验：检查被撤销邀请的 source 是否与当前操作者的 name 一致
+    # 优先查 invitations 表
     invitation = Invitation.get_by_email(team_id, email)
+    if invitation:
+        inv_source = invitation.get('source')
+    else:
+        # 如果 invitations 表里没有，可能只在 pending 列表里（但这种情况很少，因为邀请记录通常会先写入数据库）
+        # 不过也可能是在 member_notes 里（状态为 1-邀请中）
+        # 这里尝试去 member_notes 找一下（通过 email 找稍微麻烦点，因为 member_notes 主键是 user_id）
+        # 暂时只支持通过 invitations 表校验。如果 invitations 表都没记录，说明不是我们系统发出的邀请，
+        # 或者数据丢失，这种情况下为了安全，应该拒绝操作。
+        return jsonify({"success": False, "error": "未找到邀请记录，无法核实来源"}), 404
+
+    if inv_source != request_source:
+        return jsonify({"success": False, "error": "不是你的客户"}), 403
+
+    # 撤销逻辑 (复用 Admin 逻辑)
+    # invitation 已经在上面获取了
     
     api_success = False
     api_message = ""

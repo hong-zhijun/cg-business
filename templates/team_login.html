@@ -110,7 +110,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    Storage.set("team_access_auth", { username: username, password: pwd }, 7);
+                    Storage.set("team_access_auth", { username: username, password: pwd, name: data.name }, 7);
                     window.location.href = "/team";
                 } else {
                     errorText.innerText = data.error || "账号或密码错误";

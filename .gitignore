@@ -34,6 +34,8 @@ wheels/
 *.swp
 *.swo
 *~
+.qoder/
+.trae/
 
 # 系统文件
 .DS_Store

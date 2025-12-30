@@ -79,6 +79,18 @@
                         </svg>
                         邀请记录
                     </button>
+                    <button
+                        onclick="openMyClientsModal()"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
+                        <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        我的客户
+                    </button>
                     <div class="flex-1 w-full flex items-center gap-2 justify-end">
                         <div class="relative w-64">
                             <input
@@ -228,6 +240,77 @@
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
                         我知道了
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的客户模态框 -->
+        <div id="myClientsModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 id="myClientsModalTitle" class="text-lg font-semibold text-gray-900">我的客户</h3>
+                    <button onclick="closeModal('myClientsModal')" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-4 border-b border-gray-100 flex gap-4 bg-white">
+                    <div class="relative flex-1">
+                        <input
+                            type="text"
+                            id="clientSearch"
+                            placeholder="搜索邮箱..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            onkeyup="if(event.key === 'Enter') searchMyClients()" />
+                        <svg
+                            class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button onclick="searchMyClients()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        搜索
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-auto p-0">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 hidden md:table-header-group">
+                            <tr>
+                                <th class="px-6 py-3">组名</th>
+                                <th class="px-6 py-3">邮箱</th>
+                                <th class="px-6 py-3">加入时间</th>
+                                <th class="px-6 py-3">备注</th>
+                                <th class="px-6 py-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myClientsTableBody" class="divide-y divide-gray-100">
+                            <!-- 动态加载 -->
+                        </tbody>
+                    </table>
+                    <div id="myClientsLoading" class="text-center py-8 text-gray-500 hidden">加载中...</div>
+                </div>
+
+                <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <div class="text-sm text-gray-500" id="myClientsPaginationInfo"></div>
+                    <div class="flex gap-2">
+                        <button
+                            onclick="prevClientsPage()"
+                            id="btnPrevClients"
+                            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+                            上一页
+                        </button>
+                        <button
+                            onclick="nextClientsPage()"
+                            id="btnNextClients"
+                            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+                            下一页
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -561,7 +644,7 @@
                                         if (m.status === 2 && m.role !== "account-owner") {
                                             actionBtn = `
                                                     <button onclick="kickMember(${teamId}, '${m.user_id}', '${m.email}')" 
-                                                        class="ml-2 px-2 py-1 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50 transition-colors whitespace-nowrap">
+                                                        class="ml-2 text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition-colors duration-200 whitespace-nowrap">
                                                         踢出
                                                     </button>`;
                                         } else if (m.status === 1) {
@@ -693,6 +776,12 @@
                     return;
                 }
 
+                // 校验是否存在来源标识
+                if (!currentAuth || !currentAuth.name) {
+                    showToast("无法确认您的身份来源，请退出并重新登录。", "error");
+                    return;
+                }
+
                 try {
                     const response = await fetch(`/api/public/teams/${teamId}/kick`, {
                         method: "POST",
@@ -709,17 +798,32 @@
                         showToast("成员已踢出");
                         await loadMembers(teamId);
                         refreshTeams(); // 更新人数
+
+                        // 如果“我的客户”窗口打开，刷新它
+                        const myClientsModal = document.getElementById("myClientsModal");
+                        if (myClientsModal && !myClientsModal.classList.contains("hidden")) {
+                            // 保持当前页码刷新
+                            if (typeof loadMyClients === "function") {
+                                loadMyClients(typeof currentClientsPage !== "undefined" ? currentClientsPage : 1);
+                            }
+                        }
                     } else {
-                        alert("踢出失败: " + (data.error || "未知错误"));
+                        showToast(data.error || "踢出失败", "error");
                     }
                 } catch (e) {
-                    alert("请求出错: " + e.message);
+                    showToast("请求出错: " + e.message, "error");
                 }
             }
 
             // 撤销邀请
             async function revokeInvite(teamId, email) {
                 if (!confirm(`确定要撤销对 ${email} 的邀请吗？`)) {
+                    return;
+                }
+
+                // 校验是否存在来源标识
+                if (!currentAuth || !currentAuth.name) {
+                    showToast("无法确认您的身份来源，请退出并重新登录。", "error");
                     return;
                 }
 
@@ -740,10 +844,10 @@
                         await loadMembers(teamId);
                         refreshTeams(); // 更新人数
                     } else {
-                        alert("撤销失败: " + (data.error || "未知错误"));
+                        showToast(data.error || "撤销失败", "error");
                     }
                 } catch (e) {
-                    alert("请求出错: " + e.message);
+                    showToast("请求出错: " + e.message, "error");
                 }
             }
 
@@ -806,6 +910,121 @@
                     toast.classList.add("opacity-0", "-translate-y-4");
                     setTimeout(() => toast.remove(), 300);
                 }, 3000);
+            }
+            let currentClientsPage = 1;
+            let currentClientsSearch = "";
+
+            function openMyClientsModal() {
+                const auth = Storage.get("team_access_auth");
+                if (!auth || !auth.name) {
+                    alert("请重新登录后使用此功能（需要获取您的来源标识）");
+                    return;
+                }
+                const titleEl = document.getElementById("myClientsModalTitle");
+                if (titleEl) {
+                    titleEl.innerText = `我的客户【${auth.name}】（不包含邀请中）`;
+                }
+                openModal("myClientsModal");
+                loadMyClients(1);
+            }
+
+            function searchMyClients() {
+                currentClientsSearch = document.getElementById("clientSearch").value.trim();
+                loadMyClients(1);
+            }
+
+            function prevClientsPage() {
+                if (currentClientsPage > 1) {
+                    loadMyClients(currentClientsPage - 1);
+                }
+            }
+
+            function nextClientsPage() {
+                loadMyClients(currentClientsPage + 1);
+            }
+
+            async function loadMyClients(page) {
+                const tbody = document.getElementById("myClientsTableBody");
+                const loading = document.getElementById("myClientsLoading");
+                const btnPrev = document.getElementById("btnPrevClients");
+                const btnNext = document.getElementById("btnNextClients");
+                const info = document.getElementById("myClientsPaginationInfo");
+                const auth = Storage.get("team_access_auth");
+
+                if (!auth) {
+                    alert("请先登录");
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                loading.classList.remove("hidden");
+
+                try {
+                    const response = await fetch("/api/public/my-clients", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            username: auth.username,
+                            password: auth.password,
+                            page: page,
+                            search: currentClientsSearch,
+                        }),
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        const data = result.data;
+                        currentClientsPage = data.page;
+
+                        if (data.items.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">暂无数据</td></tr>';
+                        } else {
+                            tbody.innerHTML = data.items
+                                .map(
+                                    (item) => `
+                                <tr class="bg-white hover:bg-gray-50 block md:table-row border-b md:border-b-0">
+                                    <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell font-medium text-gray-900">
+                                        <span class="md:hidden text-xs text-gray-400 block mb-1">组名</span>
+                                        ${item.team_name || "-"}
+                                    </td>
+                                    <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell text-gray-500">
+                                        <span class="md:hidden text-xs text-gray-400 block mb-1">邮箱</span>
+                                        ${item.email || "-"}
+                                    </td>
+                                    <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell text-gray-500">
+                                        <span class="md:hidden text-xs text-gray-400 block mb-1">加入时间</span>
+                                        ${item.join_time_str || "-"}
+                                    </td>
+                                    <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell text-gray-500">
+                                        <span class="md:hidden text-xs text-gray-400 block mb-1">备注</span>
+                                        ${item.note || "-"}
+                                    </td>
+                                    <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell text-gray-500">
+                                        <span class="md:hidden text-xs text-gray-400 block mb-1">操作</span>
+                                        <button onclick="kickMember(${item.team_id}, '${item.user_id}', '${item.email}')" 
+                                            class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition-colors duration-200">
+                                            踢出
+                                        </button>
+                                    </td>
+                                </tr>
+                            `
+                                )
+                                .join("");
+                        }
+
+                        // 更新分页控件
+                        info.textContent = `第 ${data.page} 页 / 共 ${data.pages} 页 (总数: ${data.total})`;
+                        btnPrev.disabled = data.page <= 1;
+                        btnNext.disabled = data.page >= data.pages;
+                    } else {
+                        alert("加载失败: " + result.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("加载出错");
+                } finally {
+                    loading.classList.add("hidden");
+                }
             }
         </script>
     </body>
