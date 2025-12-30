@@ -1138,9 +1138,9 @@ def public_kick_member(team_id):
     if not team:
         return jsonify({"success": False, "error": "Team 不存在"}), 404
     
-    # 权限检查
-    if not team.get('allow_public_manage'):
-        return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
+    # 权限检查 暂时先不要了
+    # if not team.get('allow_public_manage'):
+    #     return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
 
     # 来源校验：检查被踢成员的 source 是否与当前操作者的 name 一致
     member_note = MemberNote.get(team_id, user_id)

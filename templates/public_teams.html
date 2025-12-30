@@ -131,7 +131,7 @@
         </div>
 
         <!-- Alert Modal -->
-        <div id="alertModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="alertModal" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
             <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-gray-900">提示</h2>
@@ -146,6 +146,33 @@
                     <button
                         onclick="closeModal('alertModal')"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div id="confirmModal" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">确认操作</h2>
+                    <button onclick="closeConfirmModal(false)" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="confirmMessage" class="text-gray-700 whitespace-pre-line mb-6"></div>
+                <div class="flex justify-end gap-3">
+                    <button
+                        onclick="closeConfirmModal(false)"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        取消
+                    </button>
+                    <button
+                        onclick="closeConfirmModal(true)"
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm transition-colors">
                         确定
                     </button>
                 </div>
@@ -555,6 +582,25 @@
                 document.getElementById(id).classList.add("hidden");
             }
 
+            // Confirm Modal Logic
+            let confirmResolve = null;
+
+            function showConfirm(message) {
+                return new Promise((resolve) => {
+                    document.getElementById("confirmMessage").textContent = message;
+                    document.getElementById("confirmModal").classList.remove("hidden");
+                    confirmResolve = resolve;
+                });
+            }
+
+            function closeConfirmModal(result) {
+                document.getElementById("confirmModal").classList.add("hidden");
+                if (confirmResolve) {
+                    confirmResolve(result);
+                    confirmResolve = null;
+                }
+            }
+
             // 邀请相关
             function openInviteModal(teamId, teamName) {
                 document.getElementById("inviteTeamId").value = teamId;
@@ -772,7 +818,8 @@
 
             // 踢出成员
             async function kickMember(teamId, userId, email) {
-                if (!confirm(`确定要踢出成员 ${email} 吗？\n踢出后对方将失去 Team 访问权限。`)) {
+                const confirmed = await showConfirm(`确定要踢出成员 ${email} 吗？\n踢出后对方将失去 Team 访问权限。`);
+                if (!confirmed) {
                     return;
                 }
 
@@ -817,7 +864,8 @@
 
             // 撤销邀请
             async function revokeInvite(teamId, email) {
-                if (!confirm(`确定要撤销对 ${email} 的邀请吗？`)) {
+                const confirmed = await showConfirm(`确定要撤销对 ${email} 的邀请吗？`);
+                if (!confirmed) {
                     return;
                 }
 
