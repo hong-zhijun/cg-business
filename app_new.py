@@ -1117,6 +1117,36 @@ def refresh_members(team_id):
         return jsonify(result), result.get('status_code', 500)
 
 
+@app.route('/api/public/teams/<int:team_id>/members/<user_id>/note', methods=['POST'])
+def public_update_member_note(team_id, user_id):
+    """公开页面更新成员备注 (需账号密码验证 + 来源校验)"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+    note = data.get('note', '')
+
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    # 来源校验
+    current_source = user['name']
+    
+    # 获取成员信息以校验来源
+    member_note = MemberNote.get(team_id, user_id)
+    if not member_note:
+        return jsonify({"success": False, "error": "成员记录不存在"}), 404
+        
+    if member_note.get('source') != current_source:
+        return jsonify({"success": False, "error": "只能修改自己客户的备注"}), 403
+
+    # 更新备注 (不修改 source)
+    MemberNote.update_note_and_source(team_id, user_id, note, source=None)
+    
+    return jsonify({"success": True})
+
+
 @app.route('/api/public/teams/<int:team_id>/kick', methods=['POST'])
 def public_kick_member(team_id):
     """公开端踢出成员 (需账号密码验证 + 权限检查 + 来源校验)"""

@@ -342,6 +342,36 @@
             </div>
         </div>
 
+        <!-- 备注模态框 -->
+        <div id="noteModal" class="fixed inset-0 z-[70] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900" id="noteModalTitle">修改备注</h2>
+                    <button onclick="closeModal('noteModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <input type="hidden" id="noteTeamId" />
+                <input type="hidden" id="noteUserId" />
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 mb-2" id="noteUserEmail"></p>
+                    <textarea
+                        id="noteInput"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                        rows="4"
+                        placeholder="输入备注信息..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeModal('noteModal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                    <button onclick="submitNote()" id="btnNoteSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {% include 'modals/ranking.html' %} {% include 'modals/invitations_public.html' %}
 
         <script>
@@ -991,6 +1021,63 @@
                 loadMyClients(currentClientsPage + 1);
             }
 
+            // 备注相关
+            function openNoteModal(teamId, userId, email, currentNote) {
+                document.getElementById("noteTeamId").value = teamId;
+                document.getElementById("noteUserId").value = userId;
+                document.getElementById("noteUserEmail").textContent = `正在为 ${email} 添加备注：`;
+                // 解码 note (如果包含特殊字符)
+                try {
+                    document.getElementById("noteInput").value = currentNote ? decodeURIComponent(currentNote) : "";
+                } catch (e) {
+                    document.getElementById("noteInput").value = currentNote || "";
+                }
+                openModal("noteModal");
+            }
+
+            async function submitNote() {
+                const teamId = document.getElementById("noteTeamId").value;
+                const userId = document.getElementById("noteUserId").value;
+                const note = document.getElementById("noteInput").value.trim();
+                const btn = document.getElementById("btnNoteSubmit");
+
+                const auth = Storage.get("team_access_auth");
+                if (!auth) {
+                    alert("请先登录");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerText = "保存中...";
+
+                try {
+                    const response = await fetch(`/api/public/teams/${teamId}/members/${userId}/note`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...auth,
+                            note: note,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("备注已更新");
+                        closeModal("noteModal");
+                        // 刷新我的客户列表
+                        loadMyClients(currentClientsPage);
+                    } else {
+                        alert("更新失败: " + data.error);
+                    }
+                } catch (err) {
+                    alert("请求出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "保存";
+                }
+            }
+
             async function loadMyClients(page) {
                 const tbody = document.getElementById("myClientsTableBody");
                 const loading = document.getElementById("myClientsLoading");
@@ -1049,10 +1136,18 @@
                                     </td>
                                     <td class="px-4 py-2 md:px-6 md:py-4 block md:table-cell text-gray-500">
                                         <span class="md:hidden text-xs text-gray-400 block mb-1">操作</span>
-                                        <button onclick="kickMember(${item.team_id}, '${item.user_id}', '${item.email}')" 
-                                            class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition-colors duration-200">
-                                            踢出
-                                        </button>
+                                        <div class="flex gap-2">
+                                            <button onclick="openNoteModal(${item.team_id}, '${item.user_id}', '${item.email}', '${encodeURIComponent(
+                                        item.note || ""
+                                    )}')" 
+                                                class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm transition-colors duration-200">
+                                                备注
+                                            </button>
+                                            <button onclick="kickMember(${item.team_id}, '${item.user_id}', '${item.email}')" 
+                                                class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition-colors duration-200">
+                                                踢出
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             `
