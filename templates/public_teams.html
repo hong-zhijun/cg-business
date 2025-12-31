@@ -70,27 +70,53 @@
                 </div>
 
                 <!-- 操作栏 (发送教程) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row items-center gap-4">
-                    <button
-                        onclick="openInvitationsModal()"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
-                        <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        邀请记录
-                    </button>
-                    <button
-                        onclick="openMyClientsModal()"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
-                        <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        我的客户
-                    </button>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col lg:flex-row items-center gap-4">
+                    <div class="flex flex-wrap gap-3 w-full lg:w-auto justify-center lg:justify-start">
+                        <button
+                            onclick="openInvitationsModal()"
+                            class="inline-flex items-center px-4 py-2 border border-emerald-200 shadow-sm text-sm font-medium rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            邀请记录
+                        </button>
+                        <button
+                            onclick="openMyClientsModal()"
+                            class="inline-flex items-center px-4 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-blue-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            我的客户
+                        </button>
+                        <button
+                            onclick="openMyInvitationsModal()"
+                            class="inline-flex items-center px-4 py-2 border border-purple-200 shadow-sm text-sm font-medium rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-purple-500 group-hover:text-purple-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            我的邀请
+                        </button>
+                    </div>
                     <div class="flex-1 w-full flex items-center gap-2 justify-end">
                         <div class="relative w-64">
                             <input
@@ -334,6 +360,81 @@
                         <button
                             onclick="nextClientsPage()"
                             id="btnNextClients"
+                            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的邀请模态框 -->
+        <div
+            id="myInvitationsModal"
+            class="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 id="myInvitationsModalTitle" class="text-lg font-semibold text-gray-900">我的邀请</h3>
+                    <button onclick="closeModal('myInvitationsModal')" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-4 border-b border-gray-100 flex gap-4 bg-white">
+                    <div class="relative flex-1">
+                        <input
+                            type="text"
+                            id="invitationSearch"
+                            placeholder="搜索邮箱..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                            onkeyup="if(event.key === 'Enter') searchMyInvitations()" />
+                        <svg
+                            class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button
+                        onclick="searchMyInvitations()"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        搜索
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-auto p-0">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 hidden md:table-header-group">
+                            <tr>
+                                <th class="px-6 py-3">Team 名称</th>
+                                <th class="px-6 py-3">状态</th>
+                                <th class="px-6 py-3">邀请时间</th>
+                                <th class="px-6 py-3">邮箱</th>
+                                <th class="px-6 py-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myInvitationsTableBody" class="divide-y divide-gray-100">
+                            <!-- 动态加载 -->
+                        </tbody>
+                    </table>
+                    <div id="myInvitationsLoading" class="text-center py-8 text-gray-500 hidden">加载中...</div>
+                </div>
+
+                <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <div class="text-sm text-gray-500" id="myInvitationsPaginationInfo"></div>
+                    <div class="flex gap-2">
+                        <button
+                            onclick="prevInvitationsPage()"
+                            id="btnPrevInvitations"
+                            class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
+                            上一页
+                        </button>
+                        <button
+                            onclick="nextInvitationsPage()"
+                            id="btnNextInvitations"
                             class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50">
                             下一页
                         </button>
@@ -921,6 +1022,14 @@
                         showToast("邀请已撤销");
                         await loadMembers(teamId);
                         refreshTeams(); // 更新人数
+
+                        // 如果“我的邀请”窗口打开，刷新它
+                        const myInvitationsModal = document.getElementById("myInvitationsModal");
+                        if (myInvitationsModal && !myInvitationsModal.classList.contains("hidden")) {
+                            if (typeof loadMyInvitations === "function") {
+                                loadMyInvitations(typeof currentInvitationsPage !== "undefined" ? currentInvitationsPage : 1);
+                            }
+                        }
                     } else {
                         showToast(data.error || "撤销失败", "error");
                     }
@@ -1019,6 +1128,132 @@
 
             function nextClientsPage() {
                 loadMyClients(currentClientsPage + 1);
+            }
+
+            // 我的邀请相关
+            let currentInvitationsPage = 1;
+            let currentInvitationsSearch = "";
+
+            function openMyInvitationsModal() {
+                const auth = Storage.get("team_access_auth");
+                if (!auth || !auth.name) {
+                    alert("请重新登录后使用此功能（需要获取您的来源标识）");
+                    return;
+                }
+                openModal("myInvitationsModal");
+                loadMyInvitations(1);
+            }
+
+            async function loadMyInvitations(page) {
+                const auth = Storage.get("team_access_auth");
+                const tbody = document.getElementById("myInvitationsTableBody");
+                const loading = document.getElementById("myInvitationsLoading");
+
+                loading.classList.remove("hidden");
+                tbody.innerHTML = "";
+
+                try {
+                    const response = await fetch("/api/public/my-invitations", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(auth),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        let invitations = data.invitations;
+
+                        // 过滤
+                        if (currentInvitationsSearch) {
+                            const term = currentInvitationsSearch.toLowerCase();
+                            invitations = invitations.filter((inv) => inv.email && inv.email.toLowerCase().includes(term));
+                        }
+
+                        // 分页
+                        const pageSize = 10;
+                        const total = invitations.length;
+                        const totalPages = Math.ceil(total / pageSize);
+
+                        if (page < 1) page = 1;
+                        if (page > totalPages && totalPages > 0) page = totalPages;
+                        currentInvitationsPage = page;
+
+                        const start = (page - 1) * pageSize;
+                        const end = start + pageSize;
+                        const pageItems = invitations.slice(start, end);
+
+                        // 渲染
+                        if (invitations.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">暂无邀请记录</td></tr>';
+                        } else {
+                            tbody.innerHTML = pageItems
+                                .map(
+                                    (inv) => `
+                                <tr class="bg-white hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors">
+                                    <td class="px-6 py-4 font-medium text-gray-900">${inv.team_name || "-"}</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                            ${
+                                                inv.status === "success"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : inv.status === "failed"
+                                                    ? "bg-red-100 text-red-800"
+                                                    : inv.status === "expired"
+                                                    ? "bg-gray-100 text-gray-800"
+                                                    : "bg-blue-100 text-blue-800"
+                                            }">
+                                            ${inv.status_text}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-500">${inv.created_at ? formatDate(inv.created_at) : "-"}</td>
+                                    <td class="px-6 py-4 text-gray-900">${inv.email}</td>
+                                    <td class="px-6 py-4">
+                                        ${
+                                            inv.status === "success" || inv.status === "pending"
+                                                ? `<button onclick="revokeInvite(${inv.team_id}, '${inv.email}')" 
+                                            class="text-orange-600 hover:text-orange-900 hover:underline text-sm font-medium">
+                                            撤销
+                                        </button>`
+                                                : '<span class="text-gray-400 text-sm">-</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `
+                                )
+                                .join("");
+                        }
+
+                        // 更新分页控件
+                        document.getElementById("myInvitationsPaginationInfo").innerText = `第 ${page} 页 / 共 ${
+                            totalPages || 1
+                        } 页 (共 ${total} 条)`;
+                        document.getElementById("btnPrevInvitations").disabled = page <= 1;
+                        document.getElementById("btnNextInvitations").disabled = page >= totalPages;
+                    } else {
+                        alert("加载失败: " + data.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("加载出错");
+                } finally {
+                    loading.classList.add("hidden");
+                }
+            }
+
+            function searchMyInvitations() {
+                currentInvitationsSearch = document.getElementById("invitationSearch").value.trim();
+                loadMyInvitations(1);
+            }
+
+            function prevInvitationsPage() {
+                if (currentInvitationsPage > 1) {
+                    loadMyInvitations(currentInvitationsPage - 1);
+                }
+            }
+
+            function nextInvitationsPage() {
+                loadMyInvitations(currentInvitationsPage + 1);
             }
 
             // 备注相关

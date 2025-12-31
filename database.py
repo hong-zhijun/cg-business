@@ -824,6 +824,20 @@ class Invitation:
             return cursor.lastrowid
 
     @staticmethod
+    def get_by_source(source):
+        """获取指定来源的所有邀请"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT i.*, t.name as team_name
+                FROM invitations i
+                JOIN teams t ON i.team_id = t.id
+                WHERE i.source = ?
+                ORDER BY i.created_at DESC
+            ''', (source,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
     def get_by_team(team_id):
         """获取 Team 的所有邀请"""
         with get_db() as conn:

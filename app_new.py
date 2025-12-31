@@ -2756,6 +2756,49 @@ def health():
     return jsonify({"status": "ok"})
 
 
+@app.route('/api/public/my-invitations', methods=['POST'])
+def public_my_invitations():
+    """获取我的邀请记录 (需账号密码验证)"""
+    data = request.json
+    username = data.get('username', '')
+    password = data.get('password', '')
+
+    # 验证账号
+    user = Source.verify_user(username, password)
+    if not user:
+        return jsonify({"success": False, "error": "账号或密码错误"}), 403
+
+    try:
+        invitations = Invitation.get_by_source(user['name'])
+        # 过滤敏感信息
+        safe_invitations = []
+        for inv in invitations:
+            # 转换状态文本
+            status_text = '待处理'
+            if inv["status"] == 'success':
+                status_text = '成功'
+            elif inv["status"] == 'failed':
+                status_text = '失败'
+            elif inv["status"] == 'expired':
+                status_text = '已过期'
+            elif inv["status"] == 'pending':
+                status_text = '邀请中'
+
+            safe_invitations.append({
+                "id": inv["id"],
+                "created_at": inv["created_at"],
+                "team_name": inv["team_name"],
+                "team_id": inv["team_id"],
+                "email": inv["email"],
+                "status": inv["status"],
+                "status_text": status_text
+            })
+
+        return jsonify({"success": True, "invitations": safe_invitations})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/public/invitations', methods=['POST'])
 def public_get_invitations():
     """获取所有邀请记录 (需账号密码验证)"""
