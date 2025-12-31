@@ -2770,19 +2770,47 @@ def public_my_invitations():
 
     try:
         invitations = Invitation.get_by_source(user['name'])
+        
+        # 预加载所有涉及到的 team 的 member emails，用于判断是否已加入
+        team_member_emails = {} # {team_id: set(emails)}
+        
+        # 找出所有涉及的 team_id (只关心 status='success' 的，因为 pending 肯定没加入)
+        team_ids = set(inv['team_id'] for inv in invitations if inv['status'] == 'success')
+        
+        for tid in team_ids:
+            # 获取该 Team 所有成员备注（包含 email）
+            notes = MemberNote.get_all(tid)
+            team_member_emails[tid] = set(n['email'].lower() for n in notes if n.get('email'))
+
         # 过滤敏感信息
         safe_invitations = []
         for inv in invitations:
             # 转换状态文本
             status_text = '待处理'
+            can_revoke = False
+            
             if inv["status"] == 'success':
-                status_text = '成功'
+                # 检查是否已加入
+                tid = inv['team_id']
+                email = inv['email'].lower() if inv['email'] else ''
+                
+                is_joined = False
+                if tid in team_member_emails and email in team_member_emails[tid]:
+                    is_joined = True
+                
+                if is_joined:
+                    status_text = '已加入'
+                    can_revoke = False
+                else:
+                    status_text = '邀请中' # 已发送但未加入
+                    can_revoke = True
             elif inv["status"] == 'failed':
                 status_text = '失败'
             elif inv["status"] == 'expired':
                 status_text = '已过期'
             elif inv["status"] == 'pending':
-                status_text = '邀请中'
+                status_text = '处理中' # 系统正在处理
+                can_revoke = True
 
             safe_invitations.append({
                 "id": inv["id"],
@@ -2791,7 +2819,8 @@ def public_my_invitations():
                 "team_id": inv["team_id"],
                 "email": inv["email"],
                 "status": inv["status"],
-                "status_text": status_text
+                "status_text": status_text,
+                "can_revoke": can_revoke
             })
 
         return jsonify({"success": True, "invitations": safe_invitations})
