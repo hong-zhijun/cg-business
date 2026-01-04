@@ -101,6 +101,18 @@
                 导出 Token
             </button>
             <button
+                id="detail_cancel_sub_btn"
+                class="w-full flex justify-center items-center px-4 py-2 bg-yellow-50 border border-yellow-200 shadow-sm text-sm font-medium rounded-lg text-yellow-700 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+                取消订阅
+            </button>
+            <button
                 id="detail_delete_btn"
                 class="w-full flex justify-center items-center px-4 py-2 bg-red-50 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,6 +196,12 @@
             exportToken(team.id, team.name);
         };
 
+        // 绑定取消订阅按钮事件
+        const cancelSubBtn = document.getElementById("detail_cancel_sub_btn");
+        cancelSubBtn.onclick = function () {
+            cancelSubscription(team.id, team.name);
+        };
+
         // 绑定删除按钮事件
         const deleteBtn = document.getElementById("detail_delete_btn");
         deleteBtn.onclick = function () {
@@ -213,6 +231,26 @@
                     });
             } else {
                 alert("错误: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        }
+    }
+
+    async function cancelSubscription(teamId, teamName) {
+        if (!(await showConfirm(`确定要取消 Team "${teamName}" 的订阅吗？`))) return;
+
+        try {
+            const response = await fetch(`/api/admin/teams/${teamId}/cancel-subscription`, {
+                method: "POST",
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast("订阅取消成功！");
+            } else {
+                alert("取消失败: " + (data.error || "未知错误"));
             }
         } catch (error) {
             alert("请求失败: " + error.message);

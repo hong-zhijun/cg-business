@@ -187,6 +187,36 @@ def get_team_subscription(access_token, account_id):
         return {"success": False, "error": str(e)}
 
 
+def cancel_subscription_from_openai(access_token, account_id):
+    """调用 ChatGPT API 取消订阅"""
+    url = "https://chatgpt.com/backend-api/subscriptions/cancel"
+    
+    headers = {
+        "accept": "*/*",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "authorization": f"Bearer {access_token}",
+        "chatgpt-account-id": account_id,
+        "content-type": "application/json",
+        "origin": "https://chatgpt.com",
+        "referer": "https://chatgpt.com/admin/billing",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    }
+    
+    payload = {
+        "account_id": account_id
+    }
+    
+    try:
+        response = cf_requests.post(url, headers=headers, json=payload, impersonate="chrome110")
+        
+        if response.status_code == 200:
+            return {"success": True}
+        else:
+            return {"success": False, "error": response.text, "status_code": response.status_code}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ==================== 用户端路由 ====================
 
 @app.route('/')
@@ -1681,6 +1711,22 @@ def admin_invite_member(team_id):
             "success": False,
             "error": f"邀请失败: {result.get('error', '未知错误')}"
         }), 500
+
+
+@app.route('/api/admin/teams/<int:team_id>/cancel-subscription', methods=['POST'])
+@admin_required
+def admin_cancel_subscription(team_id):
+    """管理员取消 Team 订阅"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    result = cancel_subscription_from_openai(team['access_token'], team['account_id'])
+    
+    if result['success']:
+        return jsonify({"success": True, "message": "订阅已取消"})
+    else:
+        return jsonify({"success": False, "error": result.get('error', '未知错误')}), 500
 
 
 @app.route('/api/admin/teams/<int:team_id>/kick-by-email', methods=['POST'])
