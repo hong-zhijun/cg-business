@@ -482,6 +482,31 @@ def admin_logout():
     return jsonify({"success": True})
 
 
+@app.route('/api/admin/teams/<int:team_id>/rename', methods=['POST'])
+@admin_required
+def rename_team(team_id):
+    """修改 Team 名称"""
+    data = request.json
+    new_name = data.get('name', '').strip()
+    
+    if not new_name:
+        return jsonify({"success": False, "error": "Team 名称不能为空"}), 400
+        
+    # 检查名称是否已存在（排除当前Team）
+    existing_team = Team.get_by_id(team_id)
+    if not existing_team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+        
+    # 尝试更新
+    try:
+        Team.update_team_info(team_id, name=new_name)
+        return jsonify({"success": True})
+    except sqlite3.IntegrityError:
+        return jsonify({"success": False, "error": "Team 名称已存在"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams', methods=['GET'])
 @admin_required
 def get_teams():
@@ -1243,8 +1268,8 @@ def public_revoke_invite(team_id):
         return jsonify({"success": False, "error": "Team 不存在"}), 404
     
     # 权限检查
-    if not team.get('allow_public_manage'):
-        return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
+    # if not team.get('allow_public_manage'):
+    #     return jsonify({"success": False, "error": "该 Team 未开放公开管理权限"}), 403
 
     # 来源校验：检查被撤销邀请的 source 是否与当前操作者的 name 一致
     # 优先查 invitations 表

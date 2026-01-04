@@ -605,8 +605,14 @@
                     html += `
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
-                            <div class="flex items-center">
-                                ${team.name}
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    value="${team.name}" 
+                                    onchange="updateTeamName(${team.id}, this.value)"
+                                    class="flex-1 min-w-0 text-sm font-medium text-gray-900 border-b border-transparent hover:border-blue-300 focus:border-blue-500 focus:outline-none bg-transparent transition-colors"
+                                    title="点击修改组名"
+                                />
                                 ${tokenStatusBadge}
                             </div>
                         </td>
@@ -661,6 +667,37 @@
 
                 html += "</tbody></table>";
                 container.innerHTML = html;
+            }
+
+            // 修改Team名称
+            async function updateTeamName(teamId, newName) {
+                if (!newName) {
+                    alert("Team 名称不能为空");
+                    loadTeams(); // 恢复原状
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/admin/teams/${teamId}/rename`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ name: newName }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("Team 名称修改成功");
+                    } else {
+                        alert("修改失败: " + data.error);
+                        loadTeams(); // 恢复原状
+                    }
+                } catch (error) {
+                    alert("请求失败: " + error.message);
+                    loadTeams();
+                }
             }
 
             function formatDate(dateVal) {
