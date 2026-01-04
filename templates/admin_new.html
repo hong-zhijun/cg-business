@@ -147,22 +147,6 @@
                                 编辑来源
                             </button>
                             <button
-                                onclick="openMailConfigModal()"
-                                class="inline-flex items-center px-3 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-blue-500 group-hover:text-blue-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                邮件设置
-                            </button>
-                            <button
                                 onclick="openSystemConfigModal()"
                                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all group">
                                 <svg
@@ -326,7 +310,7 @@
         'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
         'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
         'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %} {% include 'modals/sources.html' %}
-        {% include 'modals/ranking.html' %} {% include 'modals/mail_config.html' %}
+        {% include 'modals/ranking.html' %}
 
         <div
             id="alertModal"
@@ -1023,6 +1007,9 @@
                         const adminPasswordConfig = data.config.find((c) => c.key === "admin_password");
                         if (adminPasswordConfig) document.getElementById("adminPassword").value = adminPasswordConfig.value;
 
+                        // 加载邮件配置
+                        loadMailConfig();
+
                         document.getElementById("systemConfigModal").style.display = "flex";
                     } else {
                         showToast("获取配置失败: " + (data.error || "未知错误"), "error");
@@ -1261,6 +1248,122 @@
                 }
             }
 
+            // 加载邮件配置
+            async function loadMailConfig() {
+                try {
+                    const response = await fetch("/api/admin/config/mail");
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const config = data.config;
+                        document.getElementById("mail_enabled").checked = config.mail_enabled === "true";
+                        document.getElementById("mail_smtp_server").value = config.mail_smtp_server || "";
+                        document.getElementById("mail_smtp_port").value = config.mail_smtp_port || "465";
+                        document.getElementById("mail_smtp_user").value = config.mail_smtp_user || "";
+                        document.getElementById("mail_smtp_password").value = config.mail_smtp_password || "";
+                        document.getElementById("mail_sender_name").value = config.mail_sender_name || "ChatGPT Team Admin";
+                        document.getElementById("mail_use_ssl").checked = config.mail_use_ssl !== "false"; // 默认为true
+
+                        // 加载模板
+                        document.getElementById("mail_template_export_tutorial").value = config.mail_template_export_tutorial || "";
+                    }
+                } catch (error) {
+                    console.error("加载邮件配置失败:", error);
+                    showToast("加载邮件配置失败", "error");
+                }
+            }
+
+            // 保存邮件配置
+            async function saveMailConfig() {
+                const config = {
+                    mail_enabled: document.getElementById("mail_enabled").checked ? "true" : "false",
+                    mail_smtp_server: document.getElementById("mail_smtp_server").value.trim(),
+                    mail_smtp_port: document.getElementById("mail_smtp_port").value.trim(),
+                    mail_smtp_user: document.getElementById("mail_smtp_user").value.trim(),
+                    mail_smtp_password: document.getElementById("mail_smtp_password").value.trim(),
+                    mail_sender_name: document.getElementById("mail_sender_name").value.trim(),
+                    mail_use_ssl: document.getElementById("mail_use_ssl").checked ? "true" : "false",
+
+                    // 保存模板
+                    mail_template_export_tutorial: document.getElementById("mail_template_export_tutorial").value,
+                };
+
+                try {
+                    const response = await fetch("/api/admin/config/mail", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(config),
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("✅ 邮件配置已保存");
+                    } else {
+                        showToast("保存失败: " + data.error, "error");
+                    }
+                } catch (error) {
+                    console.error("保存失败:", error);
+                    showToast("保存请求失败", "error");
+                }
+            }
+
+            // 发送测试邮件
+            async function sendTestMail() {
+                const email = document.getElementById("mail_test_recipient").value.trim();
+                if (!email) {
+                    showToast("请输入接收测试邮件的邮箱", "error");
+                    return;
+                }
+
+                const btn = document.getElementById("sendTestBtn");
+                const originalText = btn.innerHTML;
+                btn.innerHTML =
+                    '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>发送中...';
+                btn.disabled = true;
+
+                try {
+                    // 1. 自动保存
+                    const config = {
+                        mail_enabled: document.getElementById("mail_enabled").checked ? "true" : "false",
+                        mail_smtp_server: document.getElementById("mail_smtp_server").value.trim(),
+                        mail_smtp_port: document.getElementById("mail_smtp_port").value.trim(),
+                        mail_smtp_user: document.getElementById("mail_smtp_user").value.trim(),
+                        mail_smtp_password: document.getElementById("mail_smtp_password").value.trim(),
+                        mail_sender_name: document.getElementById("mail_sender_name").value.trim(),
+                        mail_use_ssl: document.getElementById("mail_use_ssl").checked ? "true" : "false",
+                        mail_template_export_tutorial: document.getElementById("mail_template_export_tutorial").value,
+                    };
+
+                    await fetch("/api/admin/config/mail", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(config),
+                    });
+
+                    // 2. 发送测试
+                    const response = await fetch("/api/admin/mail/test", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: email }),
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("✅ " + data.message);
+                    } else {
+                        showToast("❌ " + data.error, "error");
+                    }
+                } catch (error) {
+                    console.error("测试失败:", error);
+                    showToast("测试请求失败", "error");
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+
             async function testTeamFullWarning() {
                 const server = document.getElementById("barkServer").value;
                 const key = document.getElementById("barkKey").value;
@@ -1394,6 +1497,141 @@
                                     </div>
                                     <p class="mt-1 text-xs text-gray-500">支持变量: {team_name}, {current_count}, {email}</p>
                                 </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 邮件服务设置 -->
+                    <details class="group border-b border-gray-100 pb-4 mb-4">
+                        <summary class="flex items-center justify-between cursor-pointer list-none select-none mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">邮件服务设置</h3>
+                            <span class="transition transform group-open:rotate-180 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="mt-2 space-y-4">
+                            <!-- 启用开关 -->
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">启用邮件服务</h3>
+                                    <p class="text-sm text-gray-500">开启后系统可以使用邮件发送通知</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="mail_enabled" class="sr-only peer" />
+                                    <div
+                                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">SMTP 服务器</label>
+                                    <input
+                                        type="text"
+                                        id="mail_smtp_server"
+                                        placeholder="例如: smtp.qq.com"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">SMTP 端口</label>
+                                    <input
+                                        type="number"
+                                        id="mail_smtp_port"
+                                        placeholder="465"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                    <p class="text-xs text-gray-500 mt-1">SSL通常为465, TLS通常为587</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">发件账号/邮箱</label>
+                                    <input
+                                        type="text"
+                                        id="mail_smtp_user"
+                                        placeholder="例如: yourname@qq.com"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">密码/授权码</label>
+                                    <input
+                                        type="password"
+                                        id="mail_smtp_password"
+                                        placeholder="邮箱密码或授权码"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">发件人显示名称</label>
+                                    <input
+                                        type="text"
+                                        id="mail_sender_name"
+                                        placeholder="例如: ChatGPT Team"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                </div>
+                                <div class="flex items-center pt-6">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            id="mail_use_ssl"
+                                            class="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                                        <span class="ml-2 text-gray-700 text-sm">使用 SSL 安全连接</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 模板设置 -->
+                            <div class="pt-4 border-t border-gray-100">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-bold text-gray-900">导出教程邮件模板</h4>
+                                    <span class="text-xs text-gray-500">支持 HTML 格式，可直接嵌入图片 URL</span>
+                                </div>
+                                <textarea
+                                    id="mail_template_export_tutorial"
+                                    rows="6"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
+                                    placeholder="在此输入 HTML 内容..."></textarea>
+                            </div>
+
+                            <!-- 测试发送区域 -->
+                            <div class="mt-6 pt-6 border-t border-gray-100">
+                                <h4 class="text-sm font-bold text-gray-900 mb-3">发送测试</h4>
+                                <div class="flex gap-2">
+                                    <input
+                                        type="email"
+                                        id="mail_test_recipient"
+                                        placeholder="输入接收测试邮件的邮箱"
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+                                    <button
+                                        onclick="sendTestMail()"
+                                        id="sendTestBtn"
+                                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 border border-gray-200 transition-colors flex items-center text-sm">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                        </svg>
+                                        发送测试
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 保存按钮 -->
+                            <div class="flex justify-end mt-4 pt-4 border-t border-gray-100">
+                                <button
+                                    onclick="saveMailConfig()"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    保存邮件配置
+                                </button>
                             </div>
                         </div>
                     </details>
