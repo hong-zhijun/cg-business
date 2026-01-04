@@ -605,43 +605,43 @@
                     return;
                 }
 
-                container.innerHTML = teams
-                    .map((team) => {
-                        // 重新计算逻辑：
-                        // joinedCount = 实际已加入成员 (member_count)
-                        // totalUsed = 数据库返回的 invite_count (包含了 member_count + pending)
-                        // 所以 pendingCount = totalUsed - joinedCount
+                // 渲染单个卡片的函数
+                const renderCard = (team) => {
+                    // 重新计算逻辑：
+                    // joinedCount = 实际已加入成员 (member_count)
+                    // totalUsed = 数据库返回的 invite_count (包含了 member_count + pending)
+                    // 所以 pendingCount = totalUsed - joinedCount
 
-                        const joinedCount = team.member_count || 0;
-                        const totalUsed = team.invite_count || 0;
-                        const pendingCount = Math.max(0, totalUsed - joinedCount);
-                        const isFull = totalUsed >= 4;
+                    const joinedCount = team.member_count || 0;
+                    const totalUsed = team.invite_count || 0;
+                    const pendingCount = Math.max(0, totalUsed - joinedCount);
+                    const isFull = totalUsed >= 4;
 
-                        // 确定已加入部分的颜色
-                        let joinedColor = "bg-green-500";
-                        if (joinedCount >= 4) joinedColor = "bg-red-500";
-                        else if (joinedCount === 3) joinedColor = "bg-orange-500";
+                    // 确定已加入部分的颜色
+                    let joinedColor = "bg-green-500";
+                    if (joinedCount >= 4) joinedColor = "bg-red-500";
+                    else if (joinedCount === 3) joinedColor = "bg-orange-500";
 
-                        // 管理权限标识
-                        const manageBadge = team.allow_public_manage
-                            ? `<span title="开放管理权限" class="ml-1 text-blue-600 cursor-help"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span>`
-                            : "";
+                    // 管理权限标识
+                    const manageBadge = team.allow_public_manage
+                        ? `<span title="开放管理权限" class="ml-1 text-blue-600 cursor-help"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span>`
+                        : "";
 
-                        // 生成4格进度条 HTML
-                        let barsHtml = "";
-                        for (let i = 0; i < 4; i++) {
-                            let color = "bg-gray-100"; // 默认为空位颜色
+                    // 生成4格进度条 HTML
+                    let barsHtml = "";
+                    for (let i = 0; i < 4; i++) {
+                        let color = "bg-gray-100"; // 默认为空位颜色
 
-                            if (i < joinedCount) {
-                                color = joinedColor; // 已加入
-                            } else if (i < joinedCount + pendingCount) {
-                                color = "bg-blue-400"; // 邀请中
-                            }
-
-                            barsHtml += `<div class="flex-1 h-2 rounded-full ${color} transition-colors duration-300"></div>`;
+                        if (i < joinedCount) {
+                            color = joinedColor; // 已加入
+                        } else if (i < joinedCount + pendingCount) {
+                            color = "bg-blue-400"; // 邀请中
                         }
 
-                        return `
+                        barsHtml += `<div class="flex-1 h-2 rounded-full ${color} transition-colors duration-300"></div>`;
+                    }
+
+                    return `
                 <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden flex flex-col">
                     <div class="p-5 flex-1">
                         <div class="flex justify-between items-start mb-4">
@@ -651,8 +651,8 @@
                                     ${manageBadge}
                                 </h3>
                                 <p class="text-xs text-gray-500 mt-1 truncate max-w-[200px]" title="${team.email || ""}">${
-                            team.email || "未设置邮箱"
-                        }</p>
+                        team.email || "未设置邮箱"
+                    }</p>
                             </div>
                             <span class="px-2 py-1 ${
                                 isFull ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
@@ -701,8 +701,59 @@
                     </div>
                 </div>
                 `;
-                    })
-                    .join("");
+                };
+
+                // 分组逻辑
+                const todayTeams = [];
+                const historyTeams = [];
+                const now = new Date();
+
+                teams.forEach((team) => {
+                    let isToday = false;
+                    if (team.created_at) {
+                        // 尝试解析日期，假设后端是UTC
+                        let dateStr = team.created_at;
+                        // 如果没有时区标识，手动添加Z作为UTC处理
+                        if (!dateStr.includes("Z") && !dateStr.includes("+")) {
+                            dateStr = dateStr.replace(" ", "T") + "Z";
+                        }
+                        const d = new Date(dateStr);
+                        // 检查是否有效日期
+                        if (!isNaN(d.getTime())) {
+                            if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+                                isToday = true;
+                            }
+                        }
+                    }
+
+                    if (isToday) {
+                        todayTeams.push(team);
+                    } else {
+                        historyTeams.push(team);
+                    }
+                });
+
+                let html = "";
+
+                if (todayTeams.length > 0) {
+                    html += todayTeams.map(renderCard).join("");
+                }
+
+                if (todayTeams.length > 0 && historyTeams.length > 0) {
+                    html += `
+                        <div class="col-span-full flex items-center gap-4 my-6">
+                            <div class="h-px bg-gray-200 flex-1"></div>
+                            <span class="text-sm text-gray-400 font-medium">往日 Team</span>
+                            <div class="h-px bg-gray-200 flex-1"></div>
+                        </div>
+                    `;
+                }
+
+                if (historyTeams.length > 0) {
+                    html += historyTeams.map(renderCard).join("");
+                }
+
+                container.innerHTML = html;
             }
 
             // 模态框操作
