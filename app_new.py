@@ -2222,6 +2222,21 @@ def update_system_config():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/create-custom-email', methods=['POST'])
+@admin_required
+def create_custom_email():
+    """调用自建邮件服务创建新邮箱"""
+    try:
+        from custom_mail_api import CustomMailAPI
+        api = CustomMailAPI()
+        result = api.create_address()
+        return jsonify({"success": True, "data": result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": f"创建失败: {str(e)}"}), 500
+
+
 @app.route('/api/admin/test-bark', methods=['POST'])
 @admin_required
 def test_bark():

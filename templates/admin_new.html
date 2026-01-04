@@ -179,6 +179,23 @@
                                 </svg>
                                 系统配置
                             </button>
+
+                            <!-- 组4: 自建邮件 (仅在启用时显示) -->
+                            <div id="customMailGroup" class="hidden flex items-center gap-2">
+                                <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                                <button
+                                    onclick="createCustomEmail()"
+                                    class="inline-flex items-center px-3 py-2 border border-indigo-200 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all group">
+                                    <svg
+                                        class="w-4 h-4 mr-2 text-indigo-500 group-hover:text-indigo-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    创建邮箱
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -369,6 +386,7 @@
                 loadTeams(); // 自动加载 Teams
                 loadTotalMembersCount(); // 加载成员总数
                 loadAutoKickConfig();
+                initCustomMailButton(); // 加载自建邮件按钮状态
 
                 // These listeners depend on elements that are now in included files.
                 // Since scripts in includes run immediately, the DOM elements should exist if the include places them in the DOM.
@@ -952,6 +970,22 @@
                         // 控制模板输入框显示
                         document.getElementById("warningTemplateGroup").style.display = warningEnabled ? "block" : "none";
 
+                        // 自建服务配置
+                        const enableSmtpConfig = data.config.find((c) => c.key === "enable_smtp");
+                        document.getElementById("enableSmtp").checked = enableSmtpConfig && enableSmtpConfig.value === "true";
+
+                        const emailDomainConfig = data.config.find((c) => c.key === "email_domain");
+                        if (emailDomainConfig) document.getElementById("emailDomain").value = emailDomainConfig.value;
+
+                        const requestBaseUrlConfig = data.config.find((c) => c.key === "request_base_url");
+                        if (requestBaseUrlConfig) document.getElementById("requestBaseUrl").value = requestBaseUrlConfig.value;
+
+                        const sitePasswordConfig = data.config.find((c) => c.key === "site_password");
+                        if (sitePasswordConfig) document.getElementById("sitePassword").value = sitePasswordConfig.value;
+
+                        const adminPasswordConfig = data.config.find((c) => c.key === "admin_password");
+                        if (adminPasswordConfig) document.getElementById("adminPassword").value = adminPasswordConfig.value;
+
                         document.getElementById("systemConfigModal").style.display = "flex";
                     } else {
                         showToast("获取配置失败: " + (data.error || "未知错误"), "error");
@@ -965,12 +999,156 @@
                 document.getElementById("systemConfigModal").style.display = "none";
             }
 
+            // 初始化自建邮件按钮状态
+            async function initCustomMailButton() {
+                try {
+                    const response = await fetch("/api/admin/system-config");
+                    const data = await response.json();
+                    if (data.success) {
+                        const enableSmtpConfig = data.config.find((c) => c.key === "enable_smtp");
+                        const enabled = enableSmtpConfig && enableSmtpConfig.value === "true";
+                        updateCustomMailButtonVisibility(enabled);
+                    }
+                } catch (error) {
+                    console.error("Failed to load system config for custom mail button:", error);
+                }
+            }
+
+            function updateCustomMailButtonVisibility(enabled) {
+                const btnGroup = document.getElementById("customMailGroup");
+                if (btnGroup) {
+                    if (enabled) {
+                        btnGroup.classList.remove("hidden");
+                        btnGroup.classList.add("flex");
+                    } else {
+                        btnGroup.classList.add("hidden");
+                        btnGroup.classList.remove("flex");
+                    }
+                }
+            }
+
+            async function createCustomEmail() {
+                // 使用自定义的 confirm modal 替代原生 confirm
+                if (!(await showConfirm("确定要创建一个新的自建邮箱吗？"))) {
+                    return;
+                }
+
+                // 显示加载状态
+                const btn = document.querySelector('button[onclick="createCustomEmail()"]');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-indigo-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>创建中...`;
+
+                try {
+                    const response = await fetch("/api/admin/create-custom-email", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const result = data.data;
+                        // 使用自定义弹窗显示结果
+                        const message = `
+                            <div class="text-left">
+                                <p class="mb-2 text-green-600 font-bold">创建成功！</p>
+                                <div class="bg-gray-50 p-3 rounded border border-gray-200 text-sm font-mono break-all relative group">
+                                    <p class="mb-1"><span class="text-gray-500">邮箱:</span> <span class="select-all text-gray-900 font-bold">${result.email}</span></p>
+                                    <p class="mb-1"><span class="text-gray-500">密码:</span> <span class="select-all text-gray-900 font-bold">${result.password}</span></p>
+                                    <p><span class="text-gray-500">JWT:</span> <span class="select-all text-gray-900">${result.jwt}</span></p>
+                                    
+                                    <button onclick="copyToClipboard('${result.email}----${result.password}----${result.jwt}')" 
+                                            class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                            title="复制全部信息">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="mt-2 text-xs text-gray-500">请复制并保存上述信息。</p>
+                            </div>
+                        `;
+                        // 这里我们使用 alertModal 的机制，但因为 alertModal 只是显示文本，我们需要支持 HTML
+                        // 所以我们临时修改 alertMessage 的 HTML 内容
+                        const messageEl = document.getElementById("alertMessage");
+                        const modalEl = document.getElementById("alertModal");
+                        if (messageEl && modalEl) {
+                            messageEl.innerHTML = message;
+                            openModal("alertModal");
+                        } else {
+                            alert(`创建成功！\n邮箱: ${result.email}\n密码: ${result.password}\nJWT: ${result.jwt}`);
+                        }
+                    } else {
+                        showToast("创建失败: " + (data.error || "未知错误"), "error");
+                    }
+                } catch (error) {
+                    showToast("请求失败: " + error.message, "error");
+                } finally {
+                    // 恢复按钮状态
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard
+                        .writeText(text)
+                        .then(() => {
+                            showToast("已复制到剪贴板");
+                        })
+                        .catch((err) => {
+                            // 降级策略
+                            fallbackCopyTextToClipboard(text);
+                        });
+                } else {
+                    fallbackCopyTextToClipboard(text);
+                }
+            }
+
+            function fallbackCopyTextToClipboard(text) {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+
+                // 避免滚动到底部
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    var successful = document.execCommand("copy");
+                    if (successful) {
+                        showToast("已复制到剪贴板");
+                    } else {
+                        showToast("复制失败", "error");
+                    }
+                } catch (err) {
+                    showToast("复制失败: " + err, "error");
+                }
+
+                document.body.removeChild(textArea);
+            }
+
             async function saveSystemConfig() {
                 const content = document.getElementById("teamPopupContent").value;
                 const barkServer = document.getElementById("barkServer").value;
                 const barkKey = document.getElementById("barkKey").value;
                 const warningEnabled = document.getElementById("teamFullWarningEnabled").checked;
                 const warningTemplate = document.getElementById("teamFullWarningTemplate").value;
+                const enableSmtp = document.getElementById("enableSmtp").checked;
+                const emailDomain = document.getElementById("emailDomain").value;
+                const requestBaseUrl = document.getElementById("requestBaseUrl").value;
+                const sitePassword = document.getElementById("sitePassword").value;
+                const adminPassword = document.getElementById("adminPassword").value;
 
                 try {
                     const response = await fetch("/api/admin/system-config", {
@@ -984,12 +1162,19 @@
                             bark_key: barkKey,
                             team_full_warning_enabled: warningEnabled ? "true" : "false",
                             team_full_warning_template: warningTemplate,
+                            enable_smtp: enableSmtp ? "true" : "false",
+                            email_domain: emailDomain,
+                            request_base_url: requestBaseUrl,
+                            site_password: sitePassword,
+                            admin_password: adminPassword,
                         }),
                     });
                     const data = await response.json();
                     if (data.success) {
                         showToast("配置已保存");
                         closeSystemConfigModal();
+                        // 更新自建邮件按钮显示状态
+                        updateCustomMailButtonVisibility(enableSmtp);
                     } else {
                         showToast("保存失败: " + (data.error || "未知错误"), "error");
                     }
@@ -1107,75 +1292,156 @@
                 <!-- 内容 -->
                 <div class="space-y-4">
                     <!-- Bark 配置 -->
-                    <div class="border-b border-gray-100 pb-4 mb-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-3">Bark 通知设置</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="barkServer" class="block text-sm font-medium text-gray-700 mb-1">Bark 服务器地址</label>
-                                <input
-                                    type="text"
-                                    id="barkServer"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                                    placeholder="https://api.day.app" />
-                            </div>
-                            <div>
-                                <label for="barkKey" class="block text-sm font-medium text-gray-700 mb-1">Bark Key</label>
-                                <div class="flex gap-2">
+                    <details class="group border-b border-gray-100 pb-4 mb-4">
+                        <summary class="flex items-center justify-between cursor-pointer list-none select-none mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">Bark 通知设置</h3>
+                            <span class="transition transform group-open:rotate-180 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="mt-2">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="barkServer" class="block text-sm font-medium text-gray-700 mb-1">Bark 服务器地址</label>
                                     <input
                                         type="text"
-                                        id="barkKey"
-                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                                        placeholder="您的 Bark Key" />
-                                    <button
-                                        onclick="testBark()"
-                                        class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
-                                        测试
-                                    </button>
+                                        id="barkServer"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                        placeholder="https://api.day.app" />
+                                </div>
+                                <div>
+                                    <label for="barkKey" class="block text-sm font-medium text-gray-700 mb-1">Bark Key</label>
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            id="barkKey"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                            placeholder="您的 Bark Key" />
+                                        <button
+                                            onclick="testBark()"
+                                            class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
+                                            测试
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 满员预警配置 -->
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <div>
+                                        <label for="teamFullWarningEnabled" class="block text-sm font-medium text-gray-900">开启 Team 满员预警</label>
+                                        <p class="text-xs text-gray-500 mt-0.5">当 Team 成员数(含管理员)达到 5 人时触发通知</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="teamFullWarningEnabled" class="sr-only peer" />
+                                        <div
+                                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div id="warningTemplateGroup" class="mt-2" style="display: none">
+                                    <label for="teamFullWarningTemplate" class="block text-sm font-medium text-gray-700 mb-1">预警消息模板</label>
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            id="teamFullWarningTemplate"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                            placeholder="Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}" />
+                                        <button
+                                            onclick="testTeamFullWarning()"
+                                            class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
+                                            测试
+                                        </button>
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">支持变量: {team_name}, {current_count}, {email}</p>
                                 </div>
                             </div>
                         </div>
+                    </details>
 
-                        <!-- 满员预警配置 -->
-                        <div class="mt-4 pt-4 border-t border-gray-100">
+                    <!-- 自建服务配置 -->
+                    <details class="group border-b border-gray-100 pb-4 mb-4">
+                        <summary class="flex items-center justify-between cursor-pointer list-none select-none mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">自建服务配置</h3>
+                            <span class="transition transform group-open:rotate-180 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="mt-2">
                             <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
                                 <div>
-                                    <label for="teamFullWarningEnabled" class="block text-sm font-medium text-gray-900">开启 Team 满员预警</label>
-                                    <p class="text-xs text-gray-500 mt-0.5">当 Team 成员数(含管理员)达到 5 人时触发通知</p>
+                                    <label for="enableSmtp" class="block text-sm font-medium text-gray-900">启用自建邮件服务</label>
+                                    <p class="text-xs text-gray-500 mt-0.5">是否使用自建的 SMTP 服务发送邮件</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="teamFullWarningEnabled" class="sr-only peer" />
+                                    <input type="checkbox" id="enableSmtp" class="sr-only peer" />
                                     <div
                                         class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                 </label>
                             </div>
-                            <div id="warningTemplateGroup" class="mt-2" style="display: none">
-                                <label for="teamFullWarningTemplate" class="block text-sm font-medium text-gray-700 mb-1">预警消息模板</label>
-                                <div class="flex gap-2">
+
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="emailDomain" class="block text-sm font-medium text-gray-700 mb-1">邮箱域名</label>
                                     <input
                                         type="text"
-                                        id="teamFullWarningTemplate"
-                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                                        placeholder="Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}" />
-                                    <button
-                                        onclick="testTeamFullWarning()"
-                                        class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-colors text-sm whitespace-nowrap">
-                                        测试
-                                    </button>
+                                        id="emailDomain"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                        placeholder="例如: example.com (用于生成自建邮箱地址)" />
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">支持变量: {team_name}, {current_count}, {email}</p>
+                                <div>
+                                    <label for="requestBaseUrl" class="block text-sm font-medium text-gray-700 mb-1">请求 Base URL</label>
+                                    <input
+                                        type="text"
+                                        id="requestBaseUrl"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                        placeholder="https://api.example.com" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="sitePassword" class="block text-sm font-medium text-gray-700 mb-1">网站密码</label>
+                                        <input
+                                            type="text"
+                                            id="sitePassword"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                            placeholder="网站访问密码" />
+                                    </div>
+                                    <div>
+                                        <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">管理密码</label>
+                                        <input
+                                            type="text"
+                                            id="adminPassword"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                            placeholder="管理员登录密码" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
-                    <div>
-                        <label for="teamPopupContent" class="block text-sm font-medium text-gray-700 mb-1">Team页面弹窗内容 (支持HTML)</label>
-                        <textarea
-                            id="teamPopupContent"
-                            rows="10"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
-                            placeholder="在此输入 HTML 内容..."></textarea>
-                        <p class="mt-1 text-sm text-gray-500">此内容将在用户每天首次访问Team页面时弹出显示。</p>
-                    </div>
+                    <!-- Team页面弹窗内容 -->
+                    <details class="group">
+                        <summary class="flex items-center justify-between cursor-pointer list-none select-none mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">Team页面弹窗内容 (支持HTML)</h3>
+                            <span class="transition transform group-open:rotate-180 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="mt-2">
+                            <textarea
+                                id="teamPopupContent"
+                                rows="10"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
+                                placeholder="在此输入 HTML 内容..."></textarea>
+                            <p class="mt-1 text-sm text-gray-500">此内容将在用户每天首次访问Team页面时弹出显示。</p>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- 底部按钮 -->

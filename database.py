@@ -299,6 +299,11 @@ def init_db():
             ('bark_key', '', 'Bark Key'),
             ('team_full_warning_enabled', 'false', '是否开启满员预警 (true/false)'),
             ('team_full_warning_template', 'Team [{team_name}] 即将满员！当前成员数: {current_count}, 新邀请: {email}', '满员预警消息模板'),
+            ('enable_smtp', 'false', '开关自建邮件服务 (true/false)'),
+            ('request_base_url', '', '请求baseUrl'),
+            ('site_password', '', '网站密码'),
+            ('admin_password', '', '管理密码'),
+            ('email_domain', '', '邮箱域名'),
         ]
 
         for key, value, desc in default_configs:
@@ -1478,8 +1483,10 @@ class SystemConfig:
                 cursor = conn.cursor()
                 for key, value in config_dict.items():
                     cursor.execute('''
-                        UPDATE system_configs 
-                        SET value = ?, updated_at = CURRENT_TIMESTAMP 
-                        WHERE key = ?
-                    ''', (value, key))
+                        INSERT INTO system_configs (key, value, updated_at)
+                        VALUES (?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT(key) DO UPDATE SET
+                        value = excluded.value,
+                        updated_at = excluded.updated_at
+                    ''', (key, value))
         return execute_with_retry(_exec)
