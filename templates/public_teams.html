@@ -116,7 +116,20 @@
                             </svg>
                             我的邀请
                         </button>
+                        <button
+                            onclick="openMaterialModal()"
+                            class="inline-flex items-center px-4 py-2 border border-pink-200 shadow-sm text-sm font-medium rounded-lg text-pink-700 bg-pink-50 hover:bg-pink-100 hover:border-pink-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-pink-500 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            共享素材
+                        </button>
                     </div>
+
                     <div class="flex-1 w-full flex items-center gap-2 justify-end">
                         <div class="relative w-64">
                             <input
@@ -468,6 +481,87 @@
                     <button onclick="closeModal('noteModal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
                     <button onclick="submitNote()" id="btnNoteSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         保存
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 素材共享模态框 -->
+        <div id="materialModal" class="fixed inset-0 z-[80] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-900">共享素材库</h3>
+                    <button onclick="closeModal('materialModal')" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 分类标签 -->
+                <div class="px-5 pt-4 pb-2 bg-white border-b border-gray-100 flex gap-2 overflow-x-auto">
+                    <button
+                        onclick="switchMaterialCategory('全部')"
+                        class="material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-50 text-blue-700"
+                        data-category="全部">
+                        全部
+                    </button>
+                    <button
+                        onclick="switchMaterialCategory('头像')"
+                        class="material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50"
+                        data-category="头像">
+                        头像
+                    </button>
+                    <button
+                        onclick="switchMaterialCategory('商品图')"
+                        class="material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50"
+                        data-category="商品图">
+                        商品图
+                    </button>
+                    <button
+                        onclick="switchMaterialCategory('笔记图')"
+                        class="material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50"
+                        data-category="笔记图">
+                        笔记图
+                    </button>
+                </div>
+
+                <!-- 素材列表区域 -->
+                <div class="flex-1 overflow-auto p-5 bg-gray-50">
+                    <div id="materialGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <!-- 动态加载 -->
+                    </div>
+                    <div id="materialLoading" class="text-center py-12 text-gray-500 hidden">加载中...</div>
+                </div>
+
+                <!-- 底部上传区 -->
+                <div class="p-4 border-t border-gray-100 bg-white flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div class="flex-1 w-full sm:w-auto flex flex-col sm:flex-row gap-3 items-center">
+                        <select
+                            id="uploadCategory"
+                            class="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="头像">头像</option>
+                            <option value="商品图">商品图</option>
+                            <option value="笔记图">笔记图</option>
+                        </select>
+                        <input
+                            type="file"
+                            id="uploadFile"
+                            accept="image/*"
+                            class="w-full sm:w-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all" />
+                    </div>
+                    <button
+                        onclick="uploadMaterial()"
+                        id="btnUploadMaterial"
+                        class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        上传素材
                     </button>
                 </div>
             </div>
@@ -1454,6 +1548,196 @@
                 } finally {
                     loading.classList.add("hidden");
                 }
+            }
+
+            // 素材共享相关
+            let currentMaterialCategory = "全部";
+
+            function openMaterialModal() {
+                const auth = Storage.get("team_access_auth");
+                if (!auth || !auth.name) {
+                    alert("请重新登录后使用此功能");
+                    return;
+                }
+                openModal("materialModal");
+                loadMaterials();
+            }
+
+            function switchMaterialCategory(category) {
+                currentMaterialCategory = category;
+                // 更新 tab 样式
+                document.querySelectorAll(".material-tab").forEach((btn) => {
+                    if (btn.dataset.category === category) {
+                        btn.className = "material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-50 text-blue-700";
+                    } else {
+                        btn.className = "material-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50";
+                    }
+                });
+                loadMaterials();
+            }
+
+            async function loadMaterials() {
+                const grid = document.getElementById("materialGrid");
+                const loading = document.getElementById("materialLoading");
+
+                grid.innerHTML = "";
+                loading.classList.remove("hidden");
+
+                try {
+                    let url = "/api/material/list";
+                    if (currentMaterialCategory !== "全部") {
+                        url += `?category=${encodeURIComponent(currentMaterialCategory)}`;
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (data.data.length === 0) {
+                            grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">暂无素材</div>';
+                        } else {
+                            grid.innerHTML = data.data
+                                .map(
+                                    (item) => `
+                                <div class="group relative bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                    <div class="aspect-w-1 aspect-h-1 w-full bg-gray-100 relative">
+                                        <img 
+                                            src="${item.full_url}" 
+                                            alt="${item.category}" 
+                                            loading="lazy"
+                                            class="w-full h-48 object-cover object-center"
+                                        />
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex flex-col gap-2 items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <button 
+                                                onclick="copyToClipboard('${item.full_url}')"
+                                                class="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all hover:bg-gray-100">
+                                                复制链接
+                                            </button>
+                                            <a 
+                                                href="${item.full_url}" 
+                                                download
+                                                target="_blank"
+                                                class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all hover:bg-blue-700 flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4 4m4-4v12"></path></svg>
+                                                下载
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="p-3">
+                                        <div class="flex justify-between items-center text-xs text-gray-500 mb-1">
+                                            <span class="bg-gray-100 px-2 py-0.5 rounded">${item.category}</span>
+                                            <span>${item.source || "未知"}</span>
+                                        </div>
+                                        <div class="text-xs text-gray-400 truncate">
+                                            ${item.created_at_str ? item.created_at_str.split(" ")[0] : "-"}
+                                        </div>
+                                    </div>
+                                </div>
+                            `
+                                )
+                                .join("");
+                        }
+                    } else {
+                        alert("加载失败: " + data.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("加载出错");
+                } finally {
+                    loading.classList.add("hidden");
+                }
+            }
+
+            async function uploadMaterial() {
+                const auth = Storage.get("team_access_auth");
+                if (!auth || !auth.name) {
+                    alert("请重新登录后使用此功能");
+                    return;
+                }
+
+                const fileInput = document.getElementById("uploadFile");
+                const categorySelect = document.getElementById("uploadCategory");
+                const btn = document.getElementById("btnUploadMaterial");
+
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    alert("请选择文件");
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("文件大小不能超过 5MB");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("category", categorySelect.value);
+                formData.append("source", auth.name); // 使用本地缓存的 name
+
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 上传中...`;
+
+                try {
+                    const response = await fetch("/api/material/upload", {
+                        method: "POST",
+                        body: formData,
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("上传成功！");
+                        fileInput.value = ""; // 清空文件选择
+                        loadMaterials(); // 刷新列表
+                    } else {
+                        alert("上传失败: " + data.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("上传出错");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(
+                        () => {
+                            showToast("链接已复制！");
+                        },
+                        (err) => {
+                            console.error("Could not copy text: ", err);
+                            fallbackCopyTextToClipboard(text);
+                        }
+                    );
+                } else {
+                    fallbackCopyTextToClipboard(text);
+                }
+            }
+
+            function fallbackCopyTextToClipboard(text) {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    var successful = document.execCommand("copy");
+                    if (successful) {
+                        showToast("链接已复制！");
+                    } else {
+                        showToast("复制失败，请手动复制", "error");
+                    }
+                } catch (err) {
+                    console.error("Fallback: Oops, unable to copy", err);
+                    showToast("复制失败，请手动复制", "error");
+                }
+                document.body.removeChild(textArea);
             }
         </script>
     </body>

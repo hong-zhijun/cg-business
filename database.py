@@ -285,6 +285,19 @@ def init_db():
             )
         ''')
 
+        # 素材共享表
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS material_shares (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                category TEXT,
+                source TEXT,
+                file_size INTEGER,
+                mime_type TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # 初始化默认配置 (邮件相关)
         default_configs = [
             ('team_popup_content', """<p>！！！劳烦各位拉了人进组之后点一下刷新，确定进组了。</p>
@@ -1000,6 +1013,8 @@ class Invitation:
             ''', (email,))
             return [row[0] for row in cursor.fetchall()]
 
+
+
     @staticmethod
     def delete_by_email(team_id, email):
         """删除指定team中指定email的邀请记录（线程安全版本，带重试机制）"""
@@ -1197,6 +1212,9 @@ class MemberNote:
                         DO UPDATE SET note = excluded.note, updated_at = CURRENT_TIMESTAMP
                     ''', (team_id, user_id, note))
         return execute_with_retry(_exec)
+
+
+
 
     @staticmethod
     def sync_member(team_id, user_id, email, role, join_time):
@@ -1508,3 +1526,54 @@ class SystemConfig:
                         updated_at = excluded.updated_at
                     ''', (key, value))
         return execute_with_retry(_exec)
+
+
+class MaterialShare:
+    @staticmethod
+    def create(url, category, source, file_size, mime_type):
+        """创建素材记录"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO material_shares (url, category, source, file_size, mime_type)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (url, category, source, file_size, mime_type))
+            return cursor.lastrowid
+
+    @staticmethod
+    def get_all(category=None, source=None):
+        """获取素材列表，支持按分类和来源筛选"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM material_shares WHERE 1=1"
+            params = []
+            
+            if category and category != '全部':
+                query += " AND category = ?"
+                params.append(category)
+            
+            if source:
+                query += " AND source LIKE ?"
+                params.append(f"%{source}%")
+            
+            query += " ORDER BY created_at DESC"
+            
+            cursor.execute(query, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def delete(material_id):
+        """删除素材记录"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM material_shares WHERE id = ?', (material_id,))
+
+    @staticmethod
+    def get_by_id(material_id):
+        """根据 ID 获取素材"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM material_shares WHERE id = ?', (material_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+

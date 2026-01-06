@@ -6,15 +6,21 @@ from curl_cffi import requests as cf_requests
 import json
 import sqlite3
 from functools import wraps
-from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source
+from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source, MaterialShare
 from datetime import datetime, timedelta
 import time
 import pytz
+import os
+import uuid
+from werkzeug.utils import secure_filename
 from config import *
 from auto_kick_service import auto_kick_service
 import threading
 from database import SystemConfig
 import mail_service
+
+# Force reload for new routes
+
 
 
 def convert_to_beijing_time(timestamp_str):
@@ -457,6 +463,174 @@ def get_my_clients():
             item['join_time_str'] = convert_to_beijing_time(item.get('updated_at')) or '-'
             
     return jsonify({"success": True, "data": result})
+
+
+# ==================== 素材共享接口 ====================
+
+@app.route('/api/material/upload', methods=['POST'])
+def upload_material():
+    """
+    素材上传接口
+    - 校验来源字段非空
+    - 校验文件后缀 (jpg, jpeg, png, gif, webp)
+    - 校验文件大小 (最大 5MB)
+    - 保存到 static/uploads/materials/
+    - 记录到数据库
+    """
+    # 1. 校验来源
+    source = request.form.get('source', '').strip()
+    if not source:
+        return jsonify({"success": False, "error": "来源 (Source) 不能为空"}), 400
+
+    # 2. 校验文件存在
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "未上传文件"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "文件名为空"}), 400
+
+    # 3. 文件校验
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+    def allowed_file(filename):
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    if not allowed_file(file.filename):
+        return jsonify({"success": False, "error": "不支持的文件格式 (仅支持 jpg, png, gif, webp)"}), 400
+
+    # 检查文件大小
+    # 移动文件指针到末尾获取大小
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)  # 重置指针
+
+    if file_size > MAX_FILE_SIZE:
+        return jsonify({"success": False, "error": "文件大小超过限制 (最大 5MB)"}), 400
+
+    # 4. 存储文件
+    upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'materials')
+    os.makedirs(upload_dir, exist_ok=True)
+
+    # 生成唯一文件名
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}.{ext}"
+    save_path = os.path.join(upload_dir, unique_filename)
+
+    try:
+        file.save(save_path)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"文件保存失败: {str(e)}"}), 500
+
+    # 5. 入库
+    # 获取其他字段
+    category = request.form.get('category', '未分类')
+    mime_type = file.mimetype
+    
+    # 构造访问 URL (假设 static 目录是公开的)
+    # request.host_url 包含协议和域名
+    # 但通常存相对路径或者绝对路径，这里存完整 URL 方便前端直接使用
+    # 不过如果域名变了会有问题。需求文档说 "图片访问路径"，示例里看起来像相对路径或绝对路径。
+    # 为了灵活，这里存相对路径 '/static/uploads/materials/xxx.jpg'，前端可能需要拼接域名，或者这里直接返回完整路径。
+    # 需求步骤1表格中说 "图片访问路径"，步骤2.2说 "返回包含完整 URL 的 JSON 数据"。
+    # 所以存入库的可以是相对路径，查询时拼完整，或者直接存完整的。
+    # 考虑到迁移性，存相对路径比较好。但在 create 时，我们先存相对路径。
+    
+    relative_url = f"/static/uploads/materials/{unique_filename}"
+    # 如果需要存完整URL，可以使用: url = request.host_url.rstrip('/') + relative_url
+    # 但数据库设计示例里没明确，暂且存相对路径，或者让前端处理。
+    # 不过看需求 2.2 "返回包含完整 URL 的 JSON 数据"，说明接口层处理。
+    # 这里我们存相对路径到数据库。
+    
+    try:
+        material_id = MaterialShare.create(
+            url=relative_url,
+            category=category,
+            source=source,
+            file_size=file_size,
+            mime_type=mime_type
+        )
+    except Exception as e:
+        # 入库失败，删除已上传的文件
+        if os.path.exists(save_path):
+            os.remove(save_path)
+        return jsonify({"success": False, "error": f"数据库记录失败: {str(e)}"}), 500
+
+    return jsonify({
+        "success": True, 
+        "data": {
+            "id": material_id,
+            "url": relative_url,
+            "category": category,
+            "source": source
+        }
+    })
+
+
+@app.route('/api/material/list', methods=['GET'])
+def list_materials():
+    """
+    素材查询接口
+    - 参数: category (可选), source (可选)
+    - 返回: 包含完整 URL 的列表，按时间倒序
+    """
+    category = request.args.get('category')
+    source = request.args.get('source')
+    
+    try:
+        materials = MaterialShare.get_all(category=category, source=source)
+        
+        # 处理返回数据
+        # 1. 拼接完整 URL
+        # 2. 格式化时间
+        base_url = request.host_url.rstrip('/')
+        
+        for item in materials:
+            # 拼接完整 URL
+            if item['url'].startswith('/'):
+                item['full_url'] = base_url + item['url']
+            else:
+                item['full_url'] = base_url + '/' + item['url']
+                
+            # 格式化时间
+            item['created_at_str'] = convert_to_beijing_time(item['created_at'])
+            
+        return jsonify({"success": True, "data": materials})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/material/<int:material_id>', methods=['DELETE'])
+@admin_required
+def delete_material(material_id):
+    """删除素材"""
+    try:
+        # 获取素材信息以删除文件
+        material = MaterialShare.get_by_id(material_id)
+        if not material:
+            return jsonify({"success": False, "error": "素材不存在"}), 404
+            
+        # 删除数据库记录
+        MaterialShare.delete(material_id)
+        
+        # 删除物理文件
+        # url 是相对路径，如 /static/uploads/materials/xxx.jpg
+        relative_path = material['url'].lstrip('/')
+        file_path = os.path.join(app.root_path, relative_path)
+        
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"删除文件失败: {e}")
+                # 不中断流程，数据库已删除
+                
+        return jsonify({"success": True, "message": "删除成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 @app.route('/admin')
