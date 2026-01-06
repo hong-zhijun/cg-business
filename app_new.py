@@ -179,7 +179,8 @@ def get_team_subscription(access_token, account_id):
             return {
                 "success": True, 
                 "active_start": convert_to_beijing_time(data.get('active_start')),
-                "active_until": convert_to_beijing_time(data.get('active_until'))
+                "active_until": convert_to_beijing_time(data.get('active_until')),
+                "will_renew": data.get('will_renew', True)
             }
         else:
             return {"success": False, "error": response.text, "status_code": response.status_code}
@@ -621,7 +622,7 @@ def create_team():
         # 获取并更新订阅信息
         sub_info = get_team_subscription(access_token, account_id)
         if sub_info['success']:
-            Team.update_subscription_info(target_team_id, sub_info['active_start'], sub_info['active_until'])
+            Team.update_subscription_info(target_team_id, sub_info['active_start'], sub_info['active_until'], sub_info.get('will_renew'))
 
         # 获取并更新成员数量
         members_result = get_team_members(access_token, account_id, target_team_id)
@@ -711,9 +712,43 @@ def update_team_token(team_id):
             # 刷新订阅信息
             sub_info = get_team_subscription(access_token, team['account_id'])
             if sub_info['success']:
-                Team.update_subscription_info(team_id, sub_info['active_start'], sub_info['active_until'])
+                Team.update_subscription_info(team_id, sub_info['active_start'], sub_info['active_until'], sub_info.get('will_renew'))
         
         return jsonify({"success": True, "message": "Token 更新成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/teams/<int:team_id>/refresh-subscription', methods=['POST'])
+@admin_required
+def refresh_team_subscription(team_id):
+    """手动刷新 Team 的订阅状态"""
+    try:
+        team = Team.get_by_id(team_id)
+        if not team:
+            return jsonify({"success": False, "error": "Team 不存在"}), 404
+            
+        access_token = team.get('access_token')
+        account_id = team.get('account_id')
+        
+        if not access_token or not account_id:
+             return jsonify({"success": False, "error": "Team 信息不完整"}), 400
+
+        sub_info = get_team_subscription(access_token, account_id)
+        
+        if sub_info['success']:
+            Team.update_subscription_info(team_id, sub_info['active_start'], sub_info['active_until'], sub_info.get('will_renew'))
+            
+            return jsonify({
+                "success": True, 
+                "message": "订阅信息已更新",
+                "active_start": sub_info['active_start'],
+                "active_until": sub_info['active_until'],
+                "will_renew": sub_info.get('will_renew')
+            })
+        else:
+             return jsonify({"success": False, "error": sub_info.get('error', '获取订阅信息失败')}), 400
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

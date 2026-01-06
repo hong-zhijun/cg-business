@@ -113,6 +113,11 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # 字段已存在
 
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN will_renew BOOLEAN DEFAULT 1')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
         # Access Keys 表 (重构: 每个邀请码对应一个 Team)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS access_keys (
@@ -405,17 +410,30 @@ class Team:
                 cursor.execute(sql, params)
 
     @staticmethod
-    def update_subscription_info(team_id, active_start, active_until):
+    def update_subscription_info(team_id, active_start, active_until, will_renew=None):
         """更新 Team 的订阅时间信息"""
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
+            
+            updates = [
+                'active_start = ?',
+                'active_until = ?',
+                'updated_at = CURRENT_TIMESTAMP'
+            ]
+            params = [active_start, active_until]
+
+            if will_renew is not None:
+                updates.append('will_renew = ?')
+                params.append(will_renew)
+            
+            params.append(team_id)
+
+            sql = f'''
                 UPDATE teams
-                SET active_start = ?, 
-                    active_until = ?,
-                    updated_at = CURRENT_TIMESTAMP
+                SET {', '.join(updates)}
                 WHERE id = ?
-            ''', (active_start, active_until, team_id))
+            '''
+            cursor.execute(sql, params)
 
     @staticmethod
     def update_member_count(team_id, count):
