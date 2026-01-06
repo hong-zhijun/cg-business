@@ -62,6 +62,7 @@ def convert_to_beijing_time(timestamp_str):
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit to allow 5MB files + overhead
 
 # 初始化数据库
 init_db()

@@ -1697,7 +1697,11 @@
                         }
                     } else {
                         console.error("Server returned non-JSON:", await response.text());
-                        showToast("上传出错: 服务器返回异常 (" + response.status + ")", "error");
+                        if (response.status === 413) {
+                            showToast("上传失败: 文件过大，超过服务器限制", "error");
+                        } else {
+                            showToast("上传出错: 服务器返回异常 (" + response.status + ")", "error");
+                        }
                     }
                 } catch (e) {
                     console.error(e);
