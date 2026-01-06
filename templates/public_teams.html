@@ -170,7 +170,7 @@
         </div>
 
         <!-- Alert Modal -->
-        <div id="alertModal" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="alertModal" class="fixed inset-0 z-[95] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
             <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-gray-900">提示</h2>
@@ -192,7 +192,7 @@
         </div>
 
         <!-- Confirm Modal -->
-        <div id="confirmModal" class="fixed inset-0 z-[60] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="confirmModal" class="fixed inset-0 z-[95] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
             <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-gray-900">确认操作</h2>
@@ -534,26 +534,11 @@
                     <div id="materialLoading" class="text-center py-12 text-gray-500 hidden">加载中...</div>
                 </div>
 
-                <!-- 底部上传区 -->
-                <div class="p-4 border-t border-gray-100 bg-white flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <div class="flex-1 w-full sm:w-auto flex flex-col sm:flex-row gap-3 items-center">
-                        <select
-                            id="uploadCategory"
-                            class="w-full sm:w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="头像">头像</option>
-                            <option value="商品图">商品图</option>
-                            <option value="笔记图">笔记图</option>
-                        </select>
-                        <input
-                            type="file"
-                            id="uploadFile"
-                            accept="image/*"
-                            class="w-full sm:w-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all" />
-                    </div>
+                <!-- 底部操作区 -->
+                <div class="p-4 border-t border-gray-100 bg-white flex justify-end">
                     <button
-                        onclick="uploadMaterial()"
-                        id="btnUploadMaterial"
-                        class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center justify-center gap-2">
+                        onclick="openUploadMaterialModal()"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 stroke-linecap="round"
@@ -563,6 +548,79 @@
                         </svg>
                         上传素材
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传素材模态框 -->
+        <div
+            id="uploadMaterialModal"
+            class="fixed inset-0 z-[90] bg-gray-900 bg-opacity-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">上传素材</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">选择分类</label>
+                            <select
+                                id="newUploadCategory"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                <option value="头像">头像</option>
+                                <option value="商品图">商品图</option>
+                                <option value="笔记图">笔记图</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">选择图片</label>
+                            <div class="flex items-center justify-center w-full">
+                                <label
+                                    for="newUploadFile"
+                                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg
+                                            class="w-8 h-8 mb-4 text-gray-500"
+                                            aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 20 16">
+                                            <path
+                                                stroke="currentColor"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                        </svg>
+                                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">点击上传</span></p>
+                                        <p class="text-xs text-gray-500">支持 JPG, PNG, GIF (MAX. 50MB)</p>
+                                    </div>
+                                    <input id="newUploadFile" type="file" class="hidden" accept="image/*" onchange="handleFileSelect(this)" />
+                                </label>
+                            </div>
+                            <div id="fileNameDisplay" class="mt-2 text-sm text-gray-600 hidden flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+                                <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span class="truncate" id="fileNameText"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button
+                            onclick="closeModal('uploadMaterialModal')"
+                            class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            取消
+                        </button>
+                        <button
+                            onclick="submitUploadMaterial()"
+                            id="btnSubmitUpload"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                            确认上传
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1648,16 +1706,38 @@
                 }
             }
 
-            async function uploadMaterial() {
+            function openUploadMaterialModal() {
+                // 重置表单
+                document.getElementById("newUploadFile").value = "";
+                document.getElementById("fileNameDisplay").classList.add("hidden");
+                // 默认选中当前分类，如果是"全部"则默认"头像"
+                const category = currentMaterialCategory === "全部" ? "头像" : currentMaterialCategory;
+                document.getElementById("newUploadCategory").value = category;
+
+                openModal("uploadMaterialModal");
+            }
+
+            function handleFileSelect(input) {
+                const fileNameDisplay = document.getElementById("fileNameDisplay");
+                const fileNameText = document.getElementById("fileNameText");
+                if (input.files && input.files.length > 0) {
+                    fileNameText.textContent = input.files[0].name;
+                    fileNameDisplay.classList.remove("hidden");
+                } else {
+                    fileNameDisplay.classList.add("hidden");
+                }
+            }
+
+            async function submitUploadMaterial() {
                 const auth = Storage.get("team_access_auth");
                 if (!auth || !auth.name) {
                     showToast("请重新登录后使用此功能", "error");
                     return;
                 }
 
-                const fileInput = document.getElementById("uploadFile");
-                const categorySelect = document.getElementById("uploadCategory");
-                const btn = document.getElementById("btnUploadMaterial");
+                const fileInput = document.getElementById("newUploadFile");
+                const categorySelect = document.getElementById("newUploadCategory");
+                const btn = document.getElementById("btnSubmitUpload");
 
                 if (!fileInput.files || fileInput.files.length === 0) {
                     showToast("请选择文件", "error");
@@ -1673,7 +1753,7 @@
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("category", categorySelect.value);
-                formData.append("source", auth.name); // 使用本地缓存的 name
+                formData.append("source", auth.name);
 
                 const originalText = btn.innerHTML;
                 btn.disabled = true;
@@ -1690,8 +1770,14 @@
                         const data = await response.json();
                         if (data.success) {
                             showToast("上传成功！");
-                            fileInput.value = ""; // 清空文件选择
-                            loadMaterials(); // 刷新列表
+                            closeModal("uploadMaterialModal");
+                            // 如果当前分类是全部，或者和上传分类一致，则刷新
+                            if (currentMaterialCategory === "全部" || currentMaterialCategory === categorySelect.value) {
+                                loadMaterials();
+                            } else {
+                                // 否则切换到上传的分类并刷新
+                                switchMaterialCategory(categorySelect.value);
+                            }
                         } else {
                             showToast("上传失败: " + data.error, "error");
                         }
