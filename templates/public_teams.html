@@ -1651,7 +1651,7 @@
             async function uploadMaterial() {
                 const auth = Storage.get("team_access_auth");
                 if (!auth || !auth.name) {
-                    alert("请重新登录后使用此功能");
+                    showToast("请重新登录后使用此功能", "error");
                     return;
                 }
 
@@ -1660,13 +1660,13 @@
                 const btn = document.getElementById("btnUploadMaterial");
 
                 if (!fileInput.files || fileInput.files.length === 0) {
-                    alert("请选择文件");
+                    showToast("请选择文件", "error");
                     return;
                 }
 
                 const file = fileInput.files[0];
                 if (file.size > 5 * 1024 * 1024) {
-                    alert("文件大小不能超过 5MB");
+                    showToast("文件大小不能超过 5MB", "error");
                     return;
                 }
 
@@ -1684,18 +1684,24 @@
                         method: "POST",
                         body: formData,
                     });
-                    const data = await response.json();
 
-                    if (data.success) {
-                        showToast("上传成功！");
-                        fileInput.value = ""; // 清空文件选择
-                        loadMaterials(); // 刷新列表
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        const data = await response.json();
+                        if (data.success) {
+                            showToast("上传成功！");
+                            fileInput.value = ""; // 清空文件选择
+                            loadMaterials(); // 刷新列表
+                        } else {
+                            showToast("上传失败: " + data.error, "error");
+                        }
                     } else {
-                        alert("上传失败: " + data.error);
+                        console.error("Server returned non-JSON:", await response.text());
+                        showToast("上传出错: 服务器返回异常 (" + response.status + ")", "error");
                     }
                 } catch (e) {
                     console.error(e);
-                    alert("上传出错");
+                    showToast("上传出错: " + e.message, "error");
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
