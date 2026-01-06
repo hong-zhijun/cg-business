@@ -493,7 +493,7 @@ def upload_material():
 
     # 3. 文件校验
     ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
-    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
     def allowed_file(filename):
         return '.' in filename and \
@@ -509,7 +509,7 @@ def upload_material():
     file.seek(0)  # 重置指针
 
     if file_size > MAX_FILE_SIZE:
-        return jsonify({"success": False, "error": "文件大小超过限制 (最大 5MB)"}), 400
+        return jsonify({"success": False, "error": "文件大小超过限制 (最大 50MB)"}), 400
 
     # 4. 存储文件
     upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'materials')
@@ -3160,6 +3160,7 @@ def public_get_invitations():
 
 if __name__ == '__main__':
     print(f"🚀 ChatGPT Team 自动邀请系统启动")
+    print(f"📦 最大上传限制: {app.config.get('MAX_CONTENT_LENGTH') / 1024 / 1024:.2f} MB")
     print(f"📍 管理员后台: http://{HOST}:{PORT}/admin")
     print(f"📍 用户页面: http://{HOST}:{PORT}/")
     print(f"🔑 管理员密码: {ADMIN_PASSWORD}")
