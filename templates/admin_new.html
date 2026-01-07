@@ -19,6 +19,9 @@
                     },
                 },
             };
+            function openFeatureSummaryModal() {
+                openModal("featureSummaryModal");
+            }
         </script>
     </head>
 
@@ -40,166 +43,70 @@
                 <div class="flex items-center justify-between gap-6">
                     <!-- 左侧按钮组 -->
                     <div class="flex items-center gap-3 flex-wrap">
-                        <!-- 组1: 邀请码管理 -->
-                        <div class="flex items-center gap-2">
-                            <button
-                                onclick="openKeysListModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                </svg>
-                                邀请码管理
-                            </button>
-                            <!-- <button
-                            onclick="openCreateKeyModal()"
-                            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <!-- 功能汇总 -->
+                        <button
+                            onclick="openFeatureSummaryModal()"
+                            class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-blue-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                             </svg>
-                            新增邀请码
-                        </button> -->
-                        </div>
+                            功能汇总
+                        </button>
 
                         <div class="w-px h-6 bg-gray-200"></div>
 
-                        <!-- 组2: 邀请与记录 -->
-                        <div class="flex items-center gap-2">
-                            <button
-                                onclick="openInvitationsModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-gray-400 group-hover:text-emerald-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                邀请记录
-                            </button>
-                        </div>
+                        <!-- 邀请记录 -->
+                        <button
+                            onclick="openInvitationsModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all group">
+                            <svg
+                                class="w-4 h-4 mr-2 text-gray-400 group-hover:text-emerald-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            邀请记录
+                        </button>
 
-                        <div class="w-px h-6 bg-gray-200"></div>
+                        <!-- 踢人日志 -->
+                        <button
+                            onclick="openKickLogsModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-gray-400 group-hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            踢人日志
+                        </button>
 
-                        <!-- 组3: 踢人与安全 -->
-                        <div class="flex items-center gap-2">
-                            <button
-                                onclick="openKickLogsModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-gray-400 group-hover:text-orange-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                踢人日志
-                            </button>
-                            <button
-                                onclick="openModal('autoKickConfigModal')"
-                                class="inline-flex items-center px-3 py-2 border border-orange-200 shadow-sm text-sm font-medium rounded-lg text-orange-700 bg-white hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-orange-500 group-hover:text-orange-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                自动踢人
-                            </button>
+                        <div class="w-px h-6 bg-gray-200 mx-1"></div>
 
-                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
-
-                            <button
-                                onclick="openSourcesModal()"
-                                class="inline-flex items-center px-3 py-2 border border-purple-200 shadow-sm text-sm font-medium rounded-lg text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-purple-500 group-hover:text-purple-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                </svg>
-                                编辑来源
-                            </button>
-                            <button
-                                onclick="openSystemConfigModal()"
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-gray-500 group-hover:text-gray-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                系统配置
-                            </button>
-
-                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
-
-                            <button
-                                onclick="openMaterialManagementModal()"
-                                class="inline-flex items-center px-3 py-2 border border-indigo-200 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all group">
-                                <svg
-                                    class="w-4 h-4 mr-2 text-indigo-500 group-hover:text-indigo-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                素材管理
-                            </button>
-
-                            <!-- 组4: 自建邮件 (仅在启用时显示) -->
-                            <div id="customMailGroup" class="hidden flex items-center gap-2">
-                                <div class="w-px h-6 bg-gray-200 mx-1"></div>
-                                <button
-                                    onclick="createCustomEmail()"
-                                    class="inline-flex items-center px-3 py-2 border border-indigo-200 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all group">
-                                    <svg
-                                        class="w-4 h-4 mr-2 text-indigo-500 group-hover:text-indigo-600"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    创建邮箱
-                                </button>
-                            </div>
-                        </div>
+                        <!-- 系统配置 -->
+                        <button
+                            onclick="openSystemConfigModal()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all group">
+                            <svg class="w-4 h-4 mr-2 text-gray-500 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            系统配置
+                        </button>
                     </div>
 
                     <!-- 右侧统计 -->
@@ -333,7 +240,7 @@
 
         <div
             id="alertModal"
-            class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+            class="modal fixed inset-0 z-[100] bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
             style="display: none">
             <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
@@ -357,7 +264,7 @@
 
         <div
             id="confirmModal"
-            class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+            class="modal fixed inset-0 z-[100] bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
             style="display: none">
             <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-md mx-4 transition-all transform">
                 <div class="flex justify-between items-center mb-4">
@@ -1539,6 +1446,108 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
             }
         </script>
+
+        <!-- 功能汇总弹窗 -->
+        <div
+            id="featureSummaryModal"
+            class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+            style="display: none">
+            <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-lg mx-4 transition-all transform">
+                <!-- 头部 -->
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        功能汇总
+                    </h2>
+                    <button onclick="closeModal('featureSummaryModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 内容: 按钮网格 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- 邀请码管理 -->
+                    <button
+                        onclick="closeModal('featureSummaryModal'); openKeysListModal()"
+                        class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all group">
+                        <svg class="w-8 h-8 mb-2 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        <span class="font-medium">邀请码管理</span>
+                    </button>
+
+                    <!-- 自动踢人 -->
+                    <button
+                        onclick="closeModal('featureSummaryModal'); openModal('autoKickConfigModal')"
+                        class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-all group">
+                        <svg class="w-8 h-8 mb-2 text-orange-400 group-hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="font-medium">自动踢人</span>
+                    </button>
+
+                    <!-- 编辑来源 -->
+                    <button
+                        onclick="closeModal('featureSummaryModal'); openSourcesModal()"
+                        class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all group">
+                        <svg class="w-8 h-8 mb-2 text-purple-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span class="font-medium">来源编辑</span>
+                    </button>
+
+                    <!-- 素材管理 -->
+                    <button
+                        onclick="closeModal('featureSummaryModal'); openMaterialManagementModal()"
+                        class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition-all group">
+                        <svg class="w-8 h-8 mb-2 text-indigo-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-medium">素材管理</span>
+                    </button>
+
+                    <!-- 创建邮箱 -->
+                    <button
+                        id="customMailGroup"
+                        onclick="createCustomEmail()"
+                        class="hidden flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition-all group w-full">
+                        <svg class="w-8 h-8 mb-2 text-indigo-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span class="font-medium">创建邮箱</span>
+                    </button>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button onclick="closeModal('featureSummaryModal')" class="text-sm text-gray-500 hover:text-gray-700 underline">关闭</button>
+                </div>
+            </div>
+        </div>
 
         <!-- 系统配置弹窗 -->
         <div
