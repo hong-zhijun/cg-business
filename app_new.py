@@ -6,7 +6,7 @@ from curl_cffi import requests as cf_requests
 import json
 import sqlite3
 from functools import wraps
-from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source, MaterialShare
+from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source, MaterialShare, ProxyAddress
 from datetime import datetime, timedelta
 import time
 import pytz
@@ -632,6 +632,88 @@ def delete_material(material_id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+# ==================== 代理管理接口 ====================
+
+@app.route('/api/admin/proxy-addresses', methods=['GET'])
+@admin_required
+def get_proxy_addresses():
+    """获取所有代理地址"""
+    try:
+        proxies = ProxyAddress.get_all()
+        # 格式化时间
+        for proxy in proxies:
+            proxy['created_at'] = convert_to_beijing_time(proxy['created_at'])
+            proxy['updated_at'] = convert_to_beijing_time(proxy['updated_at'])
+        return jsonify({"success": True, "data": proxies})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/proxy-addresses', methods=['POST'])
+@admin_required
+def add_proxy_address():
+    """新增代理地址"""
+    try:
+        data = request.json
+        protocol = data.get('protocol')
+        ip = data.get('ip')
+        port = data.get('port')
+        
+        if not all([protocol, ip, port]):
+            return jsonify({"success": False, "error": "协议、IP 和端口为必填项"}), 400
+            
+        # 检查 IP 和端口是否已存在
+        if ProxyAddress.get_by_ip_port(ip, port):
+            return jsonify({"success": False, "error": f"代理地址 {ip}:{port} 已存在"}), 400
+
+        username = data.get('username')
+        password = data.get('password')
+        description = data.get('description')
+        
+        ProxyAddress.add(protocol, ip, port, username, password, description)
+        return jsonify({"success": True, "message": "添加成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/proxy-addresses/<int:id>', methods=['PUT'])
+@admin_required
+def update_proxy_address(id):
+    """更新代理地址"""
+    try:
+        data = request.json
+        # 获取现有数据以支持部分更新（虽然前端通常传全量）
+        existing = ProxyAddress.get_by_id(id)
+        if not existing:
+            return jsonify({"success": False, "error": "代理不存在"}), 404
+            
+        protocol = data.get('protocol', existing['protocol'])
+        ip = data.get('ip', existing['ip'])
+        port = data.get('port', existing['port'])
+        
+        # 检查 IP 和端口是否与其他记录冲突
+        if ip != existing['ip'] or port != existing['port']:
+            duplicate = ProxyAddress.get_by_ip_port(ip, port)
+            if duplicate and duplicate['id'] != id:
+                return jsonify({"success": False, "error": f"代理地址 {ip}:{port} 已存在"}), 400
+
+        username = data.get('username', existing['username'])
+        password = data.get('password', existing['password'])
+        description = data.get('description', existing['description'])
+        
+        ProxyAddress.update(id, protocol, ip, port, username, password, description)
+        return jsonify({"success": True, "message": "更新成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/proxy-addresses/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_proxy_address(id):
+    """删除代理地址"""
+    try:
+        ProxyAddress.delete(id)
+        return jsonify({"success": True, "message": "删除成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/admin')

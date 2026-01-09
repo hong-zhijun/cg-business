@@ -298,6 +298,21 @@ def init_db():
             )
         ''')
 
+        # 代理地址表
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS proxy_addresses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                protocol TEXT NOT NULL,
+                ip TEXT NOT NULL,
+                port INTEGER NOT NULL,
+                username TEXT,
+                password TEXT,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # 初始化默认配置 (邮件相关)
         default_configs = [
             ('team_popup_content', """<p>！！！劳烦各位拉了人进组之后点一下刷新，确定进组了。</p>
@@ -1574,6 +1589,63 @@ class MaterialShare:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM material_shares WHERE id = ?', (material_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+
+class ProxyAddress:
+    @staticmethod
+    def get_all():
+        """获取所有代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM proxy_addresses ORDER BY created_at DESC')
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def add(protocol, ip, port, username=None, password=None, description=None):
+        """新增代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO proxy_addresses (protocol, ip, port, username, password, description)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (protocol, ip, port, username, password, description))
+            return cursor.lastrowid
+
+    @staticmethod
+    def update(id, protocol, ip, port, username=None, password=None, description=None):
+        """更新代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE proxy_addresses
+                SET protocol = ?, ip = ?, port = ?, username = ?, password = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (protocol, ip, port, username, password, description, id))
+
+    @staticmethod
+    def delete(id):
+        """删除代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM proxy_addresses WHERE id = ?', (id,))
+
+    @staticmethod
+    def get_by_id(id):
+        """根据 ID 获取代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM proxy_addresses WHERE id = ?', (id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    @staticmethod
+    def get_by_ip_port(ip, port):
+        """根据 IP 和端口获取代理地址"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM proxy_addresses WHERE ip = ? AND port = ?', (ip, port))
             row = cursor.fetchone()
             return dict(row) if row else None
 

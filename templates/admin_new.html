@@ -236,7 +236,7 @@
         'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
         'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
         'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %} {% include 'modals/sources.html' %}
-        {% include 'modals/ranking.html' %} {% include 'modals/material_management.html' %}
+        {% include 'modals/ranking.html' %} {% include 'modals/material_management.html' %} {% include 'modals/proxy_management.html' %}
 
         <div
             id="alertModal"
@@ -1540,6 +1540,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         <span class="font-medium">创建邮箱</span>
+                    </button>
+
+                    <!-- 代理管理 -->
+                    <button
+                        onclick="closeModal('featureSummaryModal'); openProxyManagementModal()"
+                        class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-all group">
+                        <svg class="w-8 h-8 mb-2 text-teal-400 group-hover:text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span class="font-medium">代理管理</span>
                     </button>
                 </div>
 
