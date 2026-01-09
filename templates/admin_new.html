@@ -236,7 +236,8 @@
         'modals/auto_kick_config.html' %} {% include 'modals/members.html' %} {% include 'modals/team_details.html' %} {% include
         'modals/invite_member.html' %} {% include 'modals/update_token.html' %} {% include 'modals/keys_list.html' %} {% include
         'modals/create_key.html' %} {% include 'modals/kick_logs.html' %} {% include 'modals/invitations.html' %} {% include 'modals/sources.html' %}
-        {% include 'modals/ranking.html' %} {% include 'modals/material_management.html' %} {% include 'modals/proxy_management.html' %}
+        {% include 'modals/ranking.html' %} {% include 'modals/material_management.html' %} {% include 'modals/proxy_management.html' %} {% include
+        'modals/change_proxy.html' %}
 
         <div
             id="alertModal"
@@ -290,6 +291,7 @@
         <script>
             let currentTeamId = null;
             let allTeamsData = []; // 存储所有Teams数据
+            let allProxies = []; // 存储所有代理信息
             let teamsLoaded = false;
 
             window.onload = function () {
@@ -297,6 +299,7 @@
                 loadTotalMembersCount(); // 加载成员总数
                 loadAutoKickConfig();
                 initCustomMailButton(); // 加载自建邮件按钮状态
+                loadProxyOptions(); // 加载代理选项
 
                 // These listeners depend on elements that are now in included files.
                 // Since scripts in includes run immediately, the DOM elements should exist if the include places them in the DOM.
@@ -317,6 +320,32 @@
                     });
                 }
             };
+
+            async function loadProxyOptions() {
+                try {
+                    const response = await fetch("/api/admin/proxy-addresses");
+                    const data = await response.json();
+                    if (data.success) {
+                        window.allProxies = data.data;
+                        const select = document.getElementById("addTeamProxySelect");
+                        if (!select) return;
+
+                        // 保留第一个选项 "不使用代理"
+                        select.innerHTML = '<option value="">不使用代理</option>';
+
+                        data.data.forEach((proxy) => {
+                            const option = document.createElement("option");
+                            option.value = proxy.id;
+                            option.textContent = `${proxy.id} - ${proxy.protocol}://${proxy.ip}:${proxy.port} ${
+                                proxy.description ? "(" + proxy.description + ")" : ""
+                            }`;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error("加载代理列表失败:", error);
+                }
+            }
 
             // 通用模态框控制
             function openModal(modalId) {

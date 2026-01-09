@@ -58,7 +58,8 @@ def init_db():
                 token_error_count INTEGER DEFAULT 0,
                 token_status TEXT DEFAULT 'active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                proxy_id INTEGER
             )
         ''')
         
@@ -115,6 +116,11 @@ def init_db():
 
         try:
             cursor.execute('ALTER TABLE teams ADD COLUMN will_renew BOOLEAN DEFAULT 1')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN proxy_id INTEGER')
         except sqlite3.OperationalError:
             pass  # 字段已存在
 
@@ -350,15 +356,15 @@ def init_db():
 
 class Team:
     @staticmethod
-    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False, allow_public_manage=False):
+    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False, allow_public_manage=False, proxy_id=None):
         """创建新 Team（不自动生成密钥,需要手动生成）"""
         with get_db() as conn:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public, allow_public_manage)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (name, account_id, access_token, organization_id, email, is_public, allow_public_manage))
+                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id))
             team_id = cursor.lastrowid
 
             return team_id
@@ -404,7 +410,7 @@ class Team:
             ''', (access_token, team_id))
 
     @staticmethod
-    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None, allow_public_manage=None):
+    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None, allow_public_manage=None, proxy_id=None):
         """更新 Team 的完整信息"""
         with get_db() as conn:
             cursor = conn.cursor()
@@ -430,6 +436,9 @@ class Team:
             if allow_public_manage is not None:
                 updates.append('allow_public_manage = ?')
                 params.append(allow_public_manage)
+            if proxy_id is not None:
+                updates.append('proxy_id = ?')
+                params.append(proxy_id)
 
             if updates:
                 updates.append('updated_at = CURRENT_TIMESTAMP')

@@ -795,6 +795,27 @@ def rename_team(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/<int:team_id>/proxy', methods=['PUT'])
+@admin_required
+def update_team_proxy(team_id):
+    """更新 Team 的代理设置"""
+    data = request.json
+    # proxy_id 可以是 int 或 None
+    proxy_id = data.get('proxy_id')
+
+    # 验证 Team 是否存在
+    existing_team = Team.get_by_id(team_id)
+    if not existing_team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+        
+    # 尝试更新
+    try:
+        Team.update_team_info(team_id, proxy_id=proxy_id)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams', methods=['GET'])
 @admin_required
 def get_teams():
@@ -847,6 +868,8 @@ def create_team():
     if not account_id or not access_token:
         return jsonify({"success": False, "error": "缺少必要的账户信息"}), 400
 
+    proxy_id = data.get('proxy_id')
+
     try:
         # 检查是否已存在相同的 organization_id
         existing_team = None
@@ -864,14 +887,15 @@ def create_team():
                 name=name,
                 account_id=account_id,
                 access_token=access_token,
-                email=email
+                email=email,
+                proxy_id=proxy_id
             )
             target_team_id = existing_team['id']
             message = f"检测到已存在的组织 (ID: {organization_id}),已自动更新 Token 和信息"
             is_updated = True
         else:
             # 不存在,创建新 Team
-            team_id = Team.create(name, account_id, access_token, organization_id, email)
+            team_id = Team.create(name, account_id, access_token, organization_id, email, proxy_id=proxy_id)
             target_team_id = team_id
             message = "Team 创建成功"
             is_updated = False
