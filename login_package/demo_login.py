@@ -12,8 +12,8 @@ from login_package import login
 # ================= 配置区域 =================
 
 # 1. 账号密码
-email = 'KaylaRobinson5900@outlook.com'
-password = 'zkrpre44416@'
+email = 'aohxdhdv0072@outlook.com'
+password = 'iszwgxchg33@'
 
 # 2. 前置代理 (本地 Clash 配置)
 # 作用：因为本地无法直连远程代理 IP，所以需要先走本地 Clash

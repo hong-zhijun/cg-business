@@ -64,7 +64,7 @@ def get_requirements_token(config):
     return 'gAAAAAC' + solution
 
 def get_pow_token():
-    config = get_config("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36")
+    config = get_config("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36")
     return get_requirements_token(config)
 
 if __name__ == "__main__":

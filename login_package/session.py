@@ -7,19 +7,19 @@ headers = {
     "cache-control": "no-cache",
     "pragma": "no-cache",
     "priority": "u=0, i",
-    "sec-ch-ua": "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+    "sec-ch-ua": "\"Chromium\";v=\"110\", \"Not A(Brand\";v=\"24\", \"Google Chrome\";v=\"110\"",
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-ch-ua-platform": "\"macOS\"",
     "sec-fetch-dest": "document",
     "sec-fetch-mode": "navigate",
     "sec-fetch-site": "none",
     "sec-fetch-user": "?1",
     "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 }
 cookies = {
     "__Host-next-auth.csrf-token": "262f512d44d0830e7b109143a218c081f3daf0823013a7176b825460ab083677%7C2bee662ef7cfafae5bcf4f0b72c349e1f9594fc57bb1249e1a02398547e33a46",
-    "oai-did": "8d181987-e570-4954-b957-88ab5e4655a8",
+    "oai-did": "a9c9e9a0-f72d-4fbc-800e-2d0e1e3c3b54",
     "__cf_bm": "5wH8j9UgA3B.fJJQt8fS1KY.LBcfrIJnAl_FVUEj5_A-1767083399-1.0.1.1-SGDM8CqchwJZgDoRQ6WUqccgHOIMm6rfUw79ztZSk0mYY_M5pJMd91FAE2mNVgeNmxYZFVrSz9OqS5W90lvR9jMBF.y3BMR4lvpPnIqu3kU",
     "_cfuvid": "7W3Jdd9bq7GmHEMVcxeqzdt1b1eYgu5BtE5ipbZ2wnY-1767083399366-0.0.1.1-604800000",
     "cf_clearance": "h6oPOdoLAvfApEsDneJMnqpoxNVUiH7OI.PV2ktpbXQ-1767083404-1.2.1.1-InHP9qFjg2c8GVNpQEgEHRQaH2DHRpFmv3R18nnE23s_85NwS7b9JbI8DsaBlwkoUYE9f5riRGs8GQPoqZOD30qm_fQ3ZM6Q2U1sfZC7KMr0wY8SrU8sRF1aqviPKbyD6nMJI0WM6vnAJfVrAM4jRpAx02MSEcA2I03nL7fkhLuLNHDAXb2jHt2RXiw2SOXvEHGcAyvYyyJoDlxgCG9j.IcsKbrSRaNldsBa1KaEYmI",
