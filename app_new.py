@@ -2508,7 +2508,8 @@ def get_kick_status():
 def get_source_ranking():
     """获取来源排行榜 (无需鉴权)"""
     try:
-        ranking = MemberNote.get_source_ranking()
+        group_type = request.args.get('group_type')
+        ranking = MemberNote.get_source_ranking(group_type=group_type)
         return jsonify({"success": True, "ranking": ranking})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

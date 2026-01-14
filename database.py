@@ -1335,19 +1335,33 @@ class MemberNote:
             return cursor.fetchone()[0]
 
     @staticmethod
-    def get_source_ranking():
-        """统计各来源的成员数量（排除所有者和空来源）"""
+    def get_source_ranking(group_type=None):
+        """统计各来源的成员数量（排除所有者和空来源），支持按组别筛选"""
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT source, COUNT(*) as count 
-                FROM member_notes 
-                WHERE source IS NOT NULL 
-                  AND source != '' 
-                  AND (role != 'account-owner' OR role IS NULL) 
-                GROUP BY source 
-                ORDER BY count DESC
-            ''')
+            
+            if group_type:
+                cursor.execute('''
+                    SELECT mn.source, COUNT(*) as count 
+                    FROM member_notes mn
+                    JOIN teams t ON mn.team_id = t.id
+                    WHERE mn.source IS NOT NULL 
+                      AND mn.source != '' 
+                      AND (mn.role != 'account-owner' OR mn.role IS NULL)
+                      AND t.group_type = ?
+                    GROUP BY mn.source 
+                    ORDER BY count DESC
+                ''', (group_type,))
+            else:
+                cursor.execute('''
+                    SELECT source, COUNT(*) as count 
+                    FROM member_notes 
+                    WHERE source IS NOT NULL 
+                      AND source != '' 
+                      AND (role != 'account-owner' OR role IS NULL) 
+                    GROUP BY source 
+                    ORDER BY count DESC
+                ''')
             return [dict(row) for row in cursor.fetchall()]
 
 

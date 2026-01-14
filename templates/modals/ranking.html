@@ -1,19 +1,39 @@
 <!-- 来源排行榜弹窗 -->
-<div id="rankingModal" class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center" style="display: none">
+<div
+    id="rankingModal"
+    class="modal fixed inset-0 z-50 bg-gray-900 bg-opacity-50 overflow-y-auto backdrop-blur-sm flex items-center justify-center"
+    style="display: none">
     <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-6 w-full max-w-2xl mx-4 transition-all transform">
         <!-- 标题栏 -->
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 来源排行榜
             </h2>
-            <button onclick="closeRankingModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+            <div class="flex items-center gap-3">
+                <select
+                    id="rankingGroupType"
+                    onchange="loadRankingData()"
+                    class="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 py-1 pl-2 pr-8">
+                    <option value="">全部组别</option>
+                    <option value="daily">当日组</option>
+                    <option value="past">往日组</option>
+                    <option value="trial">试用组</option>
+                    <option value="after_sales">售后组</option>
+                    <option value="banned">封禁组</option>
+                </select>
+                <button onclick="closeRankingModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- 图表区域 -->
@@ -46,53 +66,55 @@
     let rankingChart = null;
 
     function openRankingModal() {
-        document.getElementById('rankingModal').style.display = 'flex';
+        document.getElementById("rankingModal").style.display = "flex";
         loadRankingData();
     }
 
     function closeRankingModal() {
-        document.getElementById('rankingModal').style.display = 'none';
+        document.getElementById("rankingModal").style.display = "none";
     }
 
     async function loadRankingData() {
+        const groupType = document.getElementById("rankingGroupType").value;
         try {
-            const response = await fetch('/api/admin/stats/source-ranking');
+            const response = await fetch(`/api/admin/stats/source-ranking?group_type=${groupType}`);
             const data = await response.json();
 
             if (data.success) {
                 renderRanking(data.ranking);
             } else {
-                console.error('获取排行榜失败:', data.error);
-                alert('获取排行榜失败: ' + data.error);
+                console.error("获取排行榜失败:", data.error);
+                alert("获取排行榜失败: " + data.error);
             }
         } catch (error) {
-            console.error('请求失败:', error);
-            alert('请求失败');
+            console.error("请求失败:", error);
+            alert("请求失败");
         }
     }
 
     function renderRanking(data) {
         // 渲染列表
-        const tbody = document.getElementById('rankingListBody');
+        const tbody = document.getElementById("rankingListBody");
         if (data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center text-gray-500 text-sm">暂无数据</td></tr>';
         } else {
-            tbody.innerHTML = data.map((item, index) => {
-                let rankClass = 'text-gray-900';
-                let rankIcon = index + 1;
-                
-                if (index === 0) {
-                    rankClass = 'text-yellow-600 font-bold';
-                    rankIcon = '🥇';
-                } else if (index === 1) {
-                    rankClass = 'text-gray-600 font-bold';
-                    rankIcon = '🥈';
-                } else if (index === 2) {
-                    rankClass = 'text-orange-600 font-bold';
-                    rankIcon = '🥉';
-                }
+            tbody.innerHTML = data
+                .map((item, index) => {
+                    let rankClass = "text-gray-900";
+                    let rankIcon = index + 1;
 
-                return `
+                    if (index === 0) {
+                        rankClass = "text-yellow-600 font-bold";
+                        rankIcon = "🥇";
+                    } else if (index === 1) {
+                        rankClass = "text-gray-600 font-bold";
+                        rankIcon = "🥈";
+                    } else if (index === 2) {
+                        rankClass = "text-orange-600 font-bold";
+                        rankIcon = "🥉";
+                    }
+
+                    return `
                     <tr>
                         <td class="px-4 py-2 whitespace-nowrap text-sm ${rankClass}">
                             ${rankIcon}
@@ -105,7 +127,8 @@
                         </td>
                     </tr>
                 `;
-            }).join('');
+                })
+                .join("");
         }
 
         // 渲染图表
@@ -113,73 +136,75 @@
     }
 
     function renderChart(data) {
-        const ctx = document.getElementById('rankingChart').getContext('2d');
-        
+        const ctx = document.getElementById("rankingChart").getContext("2d");
+
         // 如果图表已存在，销毁它
         if (rankingChart) {
             rankingChart.destroy();
         }
 
-        const labels = data.map(item => item.source);
-        const counts = data.map(item => item.count);
-        
+        const labels = data.map((item) => item.source);
+        const counts = data.map((item) => item.count);
+
         // 生成随机颜色或使用主题色
         const bgColors = [
-            'rgba(59, 130, 246, 0.7)', // blue-500
-            'rgba(16, 185, 129, 0.7)', // emerald-500
-            'rgba(245, 158, 11, 0.7)', // amber-500
-            'rgba(239, 68, 68, 0.7)',  // red-500
-            'rgba(139, 92, 246, 0.7)', // violet-500
-            'rgba(236, 72, 153, 0.7)', // pink-500
-            'rgba(99, 102, 241, 0.7)', // indigo-500
+            "rgba(59, 130, 246, 0.7)", // blue-500
+            "rgba(16, 185, 129, 0.7)", // emerald-500
+            "rgba(245, 158, 11, 0.7)", // amber-500
+            "rgba(239, 68, 68, 0.7)", // red-500
+            "rgba(139, 92, 246, 0.7)", // violet-500
+            "rgba(236, 72, 153, 0.7)", // pink-500
+            "rgba(99, 102, 241, 0.7)", // indigo-500
         ];
 
         rankingChart = new Chart(ctx, {
-            type: 'bar',
+            type: "bar",
             data: {
                 labels: labels,
-                datasets: [{
-                    label: '成员数量',
-                    data: counts,
-                    backgroundColor: labels.map((_, i) => bgColors[i % bgColors.length]),
-                    borderColor: labels.map((_, i) => bgColors[i % bgColors.length].replace('0.7', '1')),
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    barPercentage: 0.6,
-                }]
+                datasets: [
+                    {
+                        label: "成员数量",
+                        data: counts,
+                        backgroundColor: labels.map((_, i) => bgColors[i % bgColors.length]),
+                        borderColor: labels.map((_, i) => bgColors[i % bgColors.length].replace("0.7", "1")),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                    },
+                ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: false,
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return `人数: ${context.raw}`;
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            stepSize: 1
+                            stepSize: 1,
                         },
                         grid: {
-                            color: '#f3f4f6'
-                        }
+                            color: "#f3f4f6",
+                        },
                     },
                     x: {
                         grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
+                            display: false,
+                        },
+                    },
+                },
+            },
         });
     }
 </script>
