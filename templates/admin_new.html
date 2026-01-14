@@ -521,11 +521,11 @@
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team 名称</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Team 名称</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成员数</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">到期时间</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">备注</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">备注</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                             </tr>
                         </thead>
@@ -551,7 +551,7 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 max-w-xs truncate" title="${team.email}">${team.email || "-"}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(team.active_until)}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-sm w-48">
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-sm w-24">
                             <button onclick="editTeamNote(${team.id}, '${team.name.replace(/'/g, "\\'")}',${`'${(team.note || "")
                         .replace(/'/g, "\\'")
                         .replace(/\n/g, "\\n")}'`})" class="text-gray-600 hover:text-blue-600 flex items-center truncate w-full text-left" title="${
@@ -560,7 +560,7 @@
                                 <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                <span class="truncate max-w-[140px]">${team.note || "添加备注"}</span>
+                                <span class="truncate max-w-[80px]">${team.note || "添加备注"}</span>
                             </button>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
