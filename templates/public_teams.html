@@ -11,6 +11,15 @@
             body {
                 font-family: "Inter", sans-serif;
             }
+            /* Hide scrollbar for Chrome, Safari and Opera */
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            /* Hide scrollbar for IE, Edge and Firefox */
+            .no-scrollbar {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+            }
         </style>
     </head>
     <body class="bg-gray-50 min-h-screen">
@@ -163,6 +172,40 @@
             </header>
 
             <!-- Team 列表容器 -->
+            <div class="mb-6 border-b border-gray-200 overflow-x-auto no-scrollbar">
+                <nav class="-mb-px flex md:grid md:grid-cols-5 min-w-full md:min-w-0" aria-label="Tabs">
+                    <button
+                        onclick="switchTab('daily')"
+                        id="tab_daily"
+                        class="group-tab w-full flex justify-center border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        当日组
+                    </button>
+                    <button
+                        onclick="switchTab('past')"
+                        id="tab_past"
+                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        往日组
+                    </button>
+                    <button
+                        onclick="switchTab('trial')"
+                        id="tab_trial"
+                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        试用组
+                    </button>
+                    <button
+                        onclick="switchTab('after_sales')"
+                        id="tab_after_sales"
+                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        售后组
+                    </button>
+                    <button
+                        onclick="switchTab('banned')"
+                        id="tab_banned"
+                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        封禁组
+                    </button>
+                </nav>
+            </div>
             <div id="teamsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 动态加载内容 -->
                 <div class="col-span-full text-center py-12 text-gray-500">正在加载数据...</div>
@@ -694,6 +737,25 @@
             });
 
             let currentAuth = null;
+            let currentGroupType = "daily";
+
+            function switchTab(groupType) {
+                currentGroupType = groupType;
+
+                // Update active tab styles
+                document.querySelectorAll(".group-tab").forEach((tab) => {
+                    tab.classList.remove("border-blue-500", "text-blue-600");
+                    tab.classList.add("border-transparent", "text-gray-500", "hover:text-gray-700", "hover:border-gray-300");
+                });
+
+                const activeTab = document.getElementById(`tab_${groupType}`);
+                if (activeTab) {
+                    activeTab.classList.remove("border-transparent", "text-gray-500", "hover:text-gray-700", "hover:border-gray-300");
+                    activeTab.classList.add("border-blue-500", "text-blue-600");
+                }
+
+                refreshTeams();
+            }
 
             async function refreshTeams() {
                 if (!currentAuth) {
@@ -710,7 +772,10 @@
                     const response = await fetch("/api/public/teams", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(currentAuth),
+                        body: JSON.stringify({
+                            ...currentAuth,
+                            group_type: currentGroupType,
+                        }),
                     });
 
                     if (response.status === 401 || response.status === 403) {
@@ -855,56 +920,11 @@
                 `;
                 };
 
-                // 分组逻辑
-                const todayTeams = [];
-                const historyTeams = [];
-                const now = new Date();
-
-                teams.forEach((team) => {
-                    let isToday = false;
-                    if (team.created_at) {
-                        // 尝试解析日期，假设后端是UTC
-                        let dateStr = team.created_at;
-                        // 如果没有时区标识，手动添加Z作为UTC处理
-                        if (!dateStr.includes("Z") && !dateStr.includes("+")) {
-                            dateStr = dateStr.replace(" ", "T") + "Z";
-                        }
-                        const d = new Date(dateStr);
-                        // 检查是否有效日期
-                        if (!isNaN(d.getTime())) {
-                            if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
-                                isToday = true;
-                            }
-                        }
-                    }
-
-                    if (isToday) {
-                        todayTeams.push(team);
-                    } else {
-                        historyTeams.push(team);
-                    }
-                });
-
+                // 直接渲染后端返回的列表
                 let html = "";
-
-                if (todayTeams.length > 0) {
-                    html += todayTeams.map(renderCard).join("");
+                if (teams.length > 0) {
+                    html += teams.map(renderCard).join("");
                 }
-
-                if (todayTeams.length > 0 && historyTeams.length > 0) {
-                    html += `
-                        <div class="col-span-full flex items-center gap-4 my-6">
-                            <div class="h-px bg-gray-200 flex-1"></div>
-                            <span class="text-sm text-gray-400 font-medium">往日 Team</span>
-                            <div class="h-px bg-gray-200 flex-1"></div>
-                        </div>
-                    `;
-                }
-
-                if (historyTeams.length > 0) {
-                    html += historyTeams.map(renderCard).join("");
-                }
-
                 container.innerHTML = html;
             }
 

@@ -59,11 +59,17 @@ def init_db():
                 token_status TEXT DEFAULT 'active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                proxy_id INTEGER
+                proxy_id INTEGER,
+                group_type TEXT
             )
         ''')
         
         # 为已存在的表添加新字段（如果不存在）
+        try:
+            cursor.execute('ALTER TABLE teams ADD COLUMN group_type TEXT')
+        except sqlite3.OperationalError:
+            pass  # 字段已存在
+        
         try:
             cursor.execute('ALTER TABLE teams ADD COLUMN token_error_count INTEGER DEFAULT 0')
         except sqlite3.OperationalError:
@@ -356,25 +362,30 @@ def init_db():
 
 class Team:
     @staticmethod
-    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False, allow_public_manage=False, proxy_id=None):
+    def create(name, account_id, access_token, organization_id=None, email=None, is_public=False, allow_public_manage=False, proxy_id=None, group_type=None):
         """创建新 Team（不自动生成密钥,需要手动生成）"""
         with get_db() as conn:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id))
+                INSERT INTO teams (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id, group_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (name, account_id, access_token, organization_id, email, is_public, allow_public_manage, proxy_id, group_type))
             team_id = cursor.lastrowid
 
             return team_id
     
     @staticmethod
-    def get_all():
+    def get_all(group_type=None):
         """获取所有 Teams，按到期时间倒序排列（还有很久才过期的在上面，快过期的在下面）"""
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM teams ORDER BY active_until DESC')
+            
+            if group_type:
+                cursor.execute('SELECT * FROM teams WHERE group_type = ? ORDER BY active_until DESC', (group_type,))
+            else:
+                cursor.execute('SELECT * FROM teams ORDER BY active_until DESC')
+            
             return [dict(row) for row in cursor.fetchall()]
     
     @staticmethod
@@ -410,7 +421,7 @@ class Team:
             ''', (access_token, team_id))
 
     @staticmethod
-    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None, allow_public_manage=None, proxy_id=None):
+    def update_team_info(team_id, name=None, account_id=None, access_token=None, email=None, is_public=None, allow_public_manage=None, proxy_id=None, group_type=None):
         """更新 Team 的完整信息"""
         with get_db() as conn:
             cursor = conn.cursor()
@@ -439,6 +450,9 @@ class Team:
             if proxy_id is not None:
                 updates.append('proxy_id = ?')
                 params.append(proxy_id)
+            if group_type is not None:
+                updates.append('group_type = ?')
+                params.append(group_type)
 
             if updates:
                 updates.append('updated_at = CURRENT_TIMESTAMP')

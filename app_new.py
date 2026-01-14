@@ -1071,6 +1071,22 @@ def update_team_public_status(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/<int:team_id>/group-type', methods=['PUT'])
+@admin_required
+def update_team_group_type(team_id):
+    """更新 Team 的组类型"""
+    data = request.json
+    group_type = data.get('group_type')
+    
+    # 允许 group_type 为空（清除设置）
+    
+    try:
+        Team.update_team_info(team_id, group_type=group_type)
+        return jsonify({"success": True, "message": "组类型更新成功"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/admin/teams/search', methods=['GET'])
 @admin_required
 def search_teams_by_email():
@@ -2761,6 +2777,7 @@ def get_public_teams():
     data = request.json
     username = data.get('username', '')
     password = data.get('password', '')
+    group_type = data.get('group_type') # 获取分组类型筛选
 
     # 验证账号
     user = Source.verify_user(username, password)
@@ -2768,8 +2785,8 @@ def get_public_teams():
         return jsonify({"success": False, "error": "账号或密码错误"}), 403
 
     try:
-        # 获取所有 Team
-        all_teams = Team.get_all()
+        # 获取符合分组的 Team (如果 group_type 为空，则获取所有)
+        all_teams = Team.get_all(group_type=group_type)
         # 筛选 is_public=True 的 Team
         public_teams = []
         for t in all_teams:

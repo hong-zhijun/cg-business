@@ -565,11 +565,15 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center gap-2">
-                                <button onclick="openInviteModal(${team.id}, '${team.name.replace(/'/g, "\\'")}')"
-                                    class="text-green-600 hover:text-green-900 flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                                    邀请
-                                </button>
+                                <select onchange="updateTeamGroupType(${team.id}, this.value)" 
+                                    class="py-1 pl-2 pr-6 text-xs border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md bg-white hover:bg-gray-50 transition-colors cursor-pointer w-24">
+                                    <option value="" ${!team.group_type ? "selected" : ""}>未分组</option>
+                                    <option value="daily" ${team.group_type === "daily" ? "selected" : ""}>当日组</option>
+                                    <option value="past" ${team.group_type === "past" ? "selected" : ""}>往日组</option>
+                                    <option value="after_sales" ${team.group_type === "after_sales" ? "selected" : ""}>售后组</option>
+                                    <option value="trial" ${team.group_type === "trial" ? "selected" : ""}>试用组</option>
+                                    <option value="banned" ${team.group_type === "banned" ? "selected" : ""}>封禁组</option>
+                                </select>
                                 <span class="text-gray-300">|</span>
                                 <button onclick="toggleTeamPublic(${team.id}, ${!team.is_public})" class="${
                         team.is_public ? "text-blue-600 hover:text-blue-900" : "text-gray-400 hover:text-gray-600"
@@ -622,6 +626,31 @@
                         showToast("Team 名称修改成功");
                     } else {
                         alert("修改失败: " + data.error);
+                        loadTeams(); // 恢复原状
+                    }
+                } catch (error) {
+                    alert("请求失败: " + error.message);
+                    loadTeams();
+                }
+            }
+
+            // 更新组类型
+            async function updateTeamGroupType(teamId, groupType) {
+                try {
+                    const response = await fetch(`/api/admin/teams/${teamId}/group-type`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ group_type: groupType }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast("组类型已更新");
+                    } else {
+                        alert("更新失败: " + data.error);
                         loadTeams(); // 恢复原状
                     }
                 } catch (error) {
