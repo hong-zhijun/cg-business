@@ -2728,7 +2728,7 @@ def test_team_full_warning():
 def get_public_system_config():
     """获取公开系统配置"""
     # Only return specific public configs to avoid leaking sensitive info
-    public_keys = ['team_popup_content']
+    public_keys = ['team_popup_content', 'floating_announcement_enabled', 'floating_announcement_content']
     configs = {}
     for key in public_keys:
         configs[key] = SystemConfig.get(key)

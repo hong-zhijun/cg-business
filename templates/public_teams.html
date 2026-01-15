@@ -20,14 +20,35 @@
                 -ms-overflow-style: none; /* IE and Edge */
                 scrollbar-width: none; /* Firefox */
             }
+            /* Floating Announcement Marquee */
+            @keyframes marquee {
+                0% {
+                    transform: translateX(100vh);
+                }
+                100% {
+                    transform: translateX(-100%);
+                }
+            }
+            .animate-marquee {
+                display: inline-block;
+                animation: marquee 20s linear infinite;
+                white-space: nowrap;
+                will-change: transform;
+                flex-shrink: 0; /* Prevent shrinking in flex container */
+                min-width: 100%; /* Ensure it takes full width */
+                padding-left: 100%;
+            }
+            .pause-on-hover:hover .animate-marquee {
+                animation-play-state: paused;
+            }
         </style>
     </head>
-    <body class="bg-gray-50 min-h-screen">
+    <body class="bg-gray-50 min-h-screen transition-all duration-300">
         <!-- 主内容区 (默认隐藏) -->
         <div id="mainContent" class="hidden container mx-auto px-4 py-8">
-            <header class="mb-8 flex flex-col gap-6">
+            <header class="mb-8 flex flex-col">
                 <!-- 顶部栏 -->
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-3">
                     <div class="flex items-center gap-3">
                         <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-10 w-10 rounded-lg object-contain" />
                         <div>
@@ -76,6 +97,13 @@
                             排行榜
                         </button>
                     </div>
+                </div>
+
+                <!-- 飘屏公告 -->
+                <div
+                    id="floatingAnnouncement"
+                    class="hidden mb-1 w-full bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-xl shadow-sm h-10 leading-10 overflow-hidden pause-on-hover">
+                    <div class="animate-marquee font-medium text-sm px-4" id="floatingAnnouncementText"></div>
                 </div>
 
                 <!-- 操作栏 (发送教程) -->
@@ -732,8 +760,8 @@
                 document.getElementById("mainContent").classList.remove("hidden");
                 // 加载数据
                 refreshTeams();
-                // 检查每日提示
-                checkDailyNotice();
+                // 加载系统配置（飘屏公告、每日提示）
+                loadSystemConfig();
             });
 
             let currentAuth = null;
@@ -1261,24 +1289,41 @@
                 }
             }
 
-            // 每日提示相关逻辑
-            async function checkDailyNotice() {
-                const key = "daily_notice_next_show";
-                const nextShow = localStorage.getItem(key);
-                const now = new Date().getTime();
+            // 系统配置加载（飘屏公告 + 每日提示）
+            async function loadSystemConfig() {
+                try {
+                    const response = await fetch("/api/public/system-config");
+                    const data = await response.json();
 
-                // 如果没有记录，或者当前时间超过了下次显示时间，则显示
-                if (!nextShow || now > parseInt(nextShow)) {
-                    try {
-                        const response = await fetch("/api/public/system-config");
-                        const data = await response.json();
-                        if (data.success && data.config.team_popup_content) {
+                    if (data.success) {
+                        // 1. 处理飘屏公告
+                        if (data.config.floating_announcement_enabled === "true" && data.config.floating_announcement_content) {
+                            const announcementEl = document.getElementById("floatingAnnouncement");
+                            const textEl = document.getElementById("floatingAnnouncementText");
+
+                            textEl.innerHTML = data.config.floating_announcement_content;
+                            announcementEl.style.display = "block";
+                            announcementEl.classList.remove("hidden");
+
+                            // Adjust animation duration
+                            const textLength = textEl.innerText.length;
+                            // 基础时间 30s，每个字符增加 1s，让速度更慢
+                            const duration = Math.max(30, textLength * 1.0);
+                            textEl.style.animationDuration = `${duration}s`;
+                        }
+
+                        // 2. 处理每日提示
+                        const key = "daily_notice_next_show";
+                        const nextShow = localStorage.getItem(key);
+                        const now = new Date().getTime();
+
+                        if ((!nextShow || now > parseInt(nextShow)) && data.config.team_popup_content) {
                             document.querySelector("#dailyNoticeModal .text-gray-700").innerHTML = data.config.team_popup_content;
                             openModal("dailyNoticeModal");
                         }
-                    } catch (e) {
-                        console.error("Failed to load daily notice", e);
                     }
+                } catch (e) {
+                    console.error("Failed to load system config", e);
                 }
             }
 

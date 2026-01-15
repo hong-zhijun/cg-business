@@ -938,6 +938,16 @@
                     const response = await fetch("/api/admin/system-config");
                     const data = await response.json();
                     if (data.success) {
+                        // 飘屏公告配置
+                        const floatingEnabledConfig = data.config.find((c) => c.key === "floating_announcement_enabled");
+                        document.getElementById("floatingAnnouncementEnabled").checked =
+                            floatingEnabledConfig && floatingEnabledConfig.value === "true";
+
+                        const floatingContentConfig = data.config.find((c) => c.key === "floating_announcement_content");
+                        if (floatingContentConfig) {
+                            document.getElementById("floatingAnnouncementContent").value = floatingContentConfig.value;
+                        }
+
                         // Team 弹窗内容
                         const popupConfig = data.config.find((c) => c.key === "team_popup_content");
                         if (popupConfig) {
@@ -1148,6 +1158,8 @@
                 const requestBaseUrl = document.getElementById("requestBaseUrl").value;
                 const sitePassword = document.getElementById("sitePassword").value;
                 const adminPassword = document.getElementById("adminPassword").value;
+                const floatingEnabled = document.getElementById("floatingAnnouncementEnabled").checked;
+                const floatingContent = document.getElementById("floatingAnnouncementContent").value;
 
                 try {
                     const response = await fetch("/api/admin/system-config", {
@@ -1156,6 +1168,8 @@
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
+                            floating_announcement_enabled: floatingEnabled ? "true" : "false",
+                            floating_announcement_content: floatingContent,
                             team_popup_content: content,
                             bark_server: barkServer,
                             bark_key: barkKey,
@@ -1912,6 +1926,36 @@
                                             placeholder="管理员登录密码" />
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 飘屏公告配置 -->
+                    <details class="group border-b border-gray-100 pb-4 mb-4">
+                        <summary class="flex items-center justify-between cursor-pointer list-none select-none mb-3">
+                            <h3 class="text-lg font-medium text-gray-900">飘屏公告配置</h3>
+                            <span class="transition transform group-open:rotate-180 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="mt-2 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700 text-sm">启用飘屏公告</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="floatingAnnouncementEnabled" class="sr-only peer" />
+                                    <div
+                                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">公告内容 (支持HTML)</label>
+                                <textarea
+                                    id="floatingAnnouncementContent"
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                    placeholder="请输入飘屏公告内容..."></textarea>
                             </div>
                         </div>
                     </details>
