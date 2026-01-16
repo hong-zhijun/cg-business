@@ -23,20 +23,23 @@
             /* Floating Announcement Marquee */
             @keyframes marquee {
                 0% {
-                    transform: translateX(100vh);
+                    left: 100%;
+                    transform: translateX(0);
                 }
                 100% {
+                    left: 0;
                     transform: translateX(-100%);
                 }
             }
             .animate-marquee {
-                display: inline-block;
-                animation: marquee 20s linear infinite;
+                position: absolute;
+                top: 0;
+                height: 100%;
+                display: flex;
+                align-items: center;
                 white-space: nowrap;
-                will-change: transform;
-                flex-shrink: 0; /* Prevent shrinking in flex container */
-                min-width: 100%; /* Ensure it takes full width */
-                padding-left: 100%;
+                will-change: left, transform;
+                animation: marquee 20s linear infinite;
             }
             .pause-on-hover:hover .animate-marquee {
                 animation-play-state: paused;
@@ -102,7 +105,7 @@
                 <!-- 飘屏公告 -->
                 <div
                     id="floatingAnnouncement"
-                    class="hidden mb-1 w-full bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-xl shadow-sm h-10 leading-10 overflow-hidden pause-on-hover">
+                    class="hidden mb-1 w-full bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-xl shadow-sm h-10 leading-10 overflow-hidden pause-on-hover relative">
                     <div class="animate-marquee font-medium text-sm px-4" id="floatingAnnouncementText"></div>
                 </div>
 
