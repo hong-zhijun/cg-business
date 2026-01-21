@@ -603,6 +603,55 @@ def list_materials():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/proxy-addresses/<int:id>/test', methods=['POST'])
+@admin_required
+def test_proxy_address(id):
+    """测试代理连接"""
+    try:
+        proxy = ProxyAddress.get_by_id(id)
+        if not proxy:
+            return jsonify({"success": False, "error": "代理不存在"}), 404
+            
+        protocol = proxy['protocol']
+        ip = proxy['ip']
+        port = proxy['port']
+        username = proxy.get('username')
+        password = proxy.get('password')
+        
+        # 构造代理 URL
+        if username and password:
+            proxy_url = f"{protocol}://{username}:{password}@{ip}:{port}"
+        else:
+            proxy_url = f"{protocol}://{ip}:{port}"
+            
+        proxies = {
+            "http": proxy_url,
+            "https": proxy_url
+        }
+        
+        # 测试连接 (使用 OpenAI)
+        test_url = "https://chatgpt.com"
+        
+        try:
+            resp = cf_requests.get(
+                test_url, 
+                proxies=proxies, 
+                timeout=10, 
+                impersonate="chrome110"
+            )
+            
+            if resp.status_code in [200, 403]:
+                # 403 也是连通的，只是被 Cloudflare 拦截，但也说明代理可用
+                return jsonify({"success": True, "message": "连接成功"})
+            else:
+                return jsonify({"success": False, "error": f"连接失败 (状态码: {resp.status_code})"}), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": f"连接超时或失败: {str(e)}"}), 200
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/material/<int:material_id>', methods=['DELETE'])
 @admin_required
 def delete_material(material_id):

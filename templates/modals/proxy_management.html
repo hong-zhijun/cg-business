@@ -227,12 +227,13 @@
                 }</td>
                 <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(proxy.created_at)}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                    <button onclick="testProxyAddress(${proxy.id}, this)" class="text-green-600 hover:text-green-900 mr-3">测试</button>
                     <button onclick="copyProxyAddress(${proxy.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">复制</button>
                     <button onclick="openEditProxyModal(${proxy.id})" class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
                     <button onclick="deleteProxyAddress(${proxy.id})" class="text-red-600 hover:text-red-900">删除</button>
                 </td>
             </tr>
-        `
+        `,
             )
             .join("");
     }
@@ -349,6 +350,53 @@
         } catch (error) {
             console.error("删除失败:", error);
             alert("请求失败: " + error.message);
+        }
+    }
+
+    async function testProxyAddress(id, btn) {
+        const originalContent = btn.innerHTML;
+        const originalClass = btn.className;
+
+        // 设置加载状态
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 mr-1 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>测试中
+        `;
+        btn.className = "text-gray-400 mr-3 inline-flex items-center cursor-not-allowed";
+
+        try {
+            const response = await fetch(`/api/admin/proxy-addresses/${id}/test`, {
+                method: "POST",
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                showToast("连接成功");
+                btn.innerHTML = "成功";
+                btn.className = "text-green-600 font-bold mr-3 inline-flex items-center";
+            } else {
+                // 失败时给出提示
+                alert("测试失败: " + (result.error || "未知错误"));
+                btn.innerHTML = "失败";
+                btn.className = "text-red-600 font-bold mr-3 inline-flex items-center";
+            }
+        } catch (error) {
+            console.error("测试异常:", error);
+            alert("请求异常: " + error.message);
+            btn.innerHTML = "异常";
+            btn.className = "text-red-600 font-bold mr-3 inline-flex items-center";
+        } finally {
+            // 3秒后恢复按钮状态
+            setTimeout(() => {
+                if (document.body.contains(btn)) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    btn.className = originalClass;
+                }
+            }, 3000);
         }
     }
 </script>
