@@ -127,6 +127,18 @@
                 更新 Token
             </button>
             <button
+                id="relogin_btn"
+                class="w-full flex justify-center items-center px-4 py-2 bg-blue-50 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                重新登录
+            </button>
+            <button
                 id="detail_export_btn"
                 class="w-full flex justify-center items-center px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,6 +257,12 @@
             openUpdateTokenModal(team.id);
         };
 
+        // 绑定重新登录按钮事件
+        const reloginBtn = document.getElementById("relogin_btn");
+        reloginBtn.onclick = function () {
+            reloginTeam(team.id);
+        };
+
         // 绑定导出按钮事件
         const exportBtn = document.getElementById("detail_export_btn");
         exportBtn.onclick = function () {
@@ -298,31 +316,65 @@
         const btn = document.getElementById("detail_cancel_sub_btn");
         const originalContent = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `
-            <svg class="animate-spin h-4 w-4 text-yellow-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-yellow-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            处理中...
-        `;
+            </svg> 取消中...`;
 
         try {
             const response = await fetch(`/api/admin/teams/${teamId}/cancel-subscription`, {
                 method: "POST",
             });
-
             const data = await response.json();
 
             if (data.success) {
-                showToast("订阅取消成功！");
+                showToast(`✅ Team "${teamName}" 订阅已取消`);
+                closeModal("teamDetailsModal");
+                loadTeams(); // 刷新列表
             } else {
-                alert("取消失败: " + (data.error || "未知错误"));
+                alert("取消订阅失败: " + data.error);
             }
         } catch (error) {
             alert("请求失败: " + error.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalContent;
+        }
+    }
+
+    async function reloginTeam(teamId) {
+        if (!(await showConfirm("确定要使用备注中的账号密码重新登录吗？这将覆盖当前的 Token。"))) {
+            return;
+        }
+
+        const btn = document.getElementById("relogin_btn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML =
+            '<svg class="animate-spin h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 登录中...';
+
+        try {
+            const response = await fetch(`/api/admin/teams/${teamId}/relogin`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast("登录成功！");
+                closeModal("teamDetailsModal");
+                loadTeams(); // 刷新列表
+            } else {
+                alert("登录失败: " + data.error);
+            }
+        } catch (error) {
+            alert("请求失败: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     }
 

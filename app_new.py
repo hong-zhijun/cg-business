@@ -1000,6 +1000,113 @@ def update_team_token(team_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/admin/teams/<int:team_id>/relogin', methods=['POST'])
+@admin_required
+def relogin_team(team_id):
+    """
+    重新登录 Team
+    1. 获取 Team 信息 (备注、代理)
+    2. 解析账号密码
+    3. 调用登录接口
+    4. 更新 Token
+    """
+    # 1. 获取 Team 信息
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({'success': False, 'error': 'Team 不存在'})
+
+    # 2. 解析账号密码
+    note = team.get('note', '')
+    if not note or '----' not in note:
+        return jsonify({'success': False, 'error': '备注格式错误或为空，请确保格式为: email----password'})
+    
+    try:
+        parts = note.split('----')
+        email = parts[0].strip()
+        password = parts[1].strip()
+    except IndexError:
+        return jsonify({'success': False, 'error': '备注解析失败'})
+
+    # 3. 获取代理信息
+    proxy_str = None
+    proxy_id = team.get('proxy_id')
+    if proxy_id:
+        proxy = ProxyAddress.get_by_id(proxy_id)
+        if proxy:
+            # 格式: 代理类型,ip,端口,用户名,密码
+            protocol = proxy.get('protocol', 'http')
+            ip = proxy.get('ip')
+            port = proxy.get('port')
+            username = proxy.get('username', '')
+            pwd = proxy.get('password', '')
+            
+            proxy_str = f"{protocol},{ip},{port},{username},{pwd}"
+
+    # 4. 调用登录接口
+    try:
+        from login_package.login import login
+        print(f"尝试重新登录 Team {team_id}: {email} (Proxy: {'Yes' if proxy_str else 'No'})")
+        session_data = login(email, password, proxy_str=proxy_str)
+        
+        if session_data:
+            # 5. 更新 Token
+            # session_data 可能是 dict 也可能是 json 字符串
+            # 尝试解析，如果失败则假设它是 accessToken 字符串? 
+            # 或者是直接包含accessToken的dict?
+            # 用户提示: "login 函数返回的就是一个json字符串 可以直接使用的"
+            # 这里的 "json字符串" 可能指 json.loads 后得到的 dict，或者就是 str
+            
+            access_token = None
+            if isinstance(session_data, dict):
+                 access_token = session_data.get('accessToken')
+            elif isinstance(session_data, str):
+                # 尝试解析 JSON
+                try:
+                    data = json.loads(session_data)
+                    if isinstance(data, dict):
+                         access_token = data.get('accessToken')
+                except:
+                     pass
+            
+            # 如果上面没解析出来，且 session_data 本身就是 accessToken 字符串 (虽然不太可能，做个防御)
+            # 或者 login 返回的是整个 Session 信息的 JSON 结构
+            
+            if not access_token:
+                 # 兜底：打印一下看看结构，或者报错
+                 print(f"解析 Session 失败，类型: {type(session_data)}")
+                 if isinstance(session_data, dict):
+                     print(f"Keys: {session_data.keys()}")
+                 
+                 return jsonify({'success': False, 'error': '登录成功但无法解析 accessToken'})
+
+            if access_token:
+                Team.update_token(team_id, access_token)
+                
+                # 刷新关联信息
+                # 刷新成员数
+                members_result = get_team_members(access_token, team['account_id'], team_id)
+                if members_result['success']:
+                    members = members_result.get('members', [])
+                    non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+                    Team.update_member_count(team_id, len(non_owner_members))
+                    
+                # 刷新订阅信息
+                sub_info = get_team_subscription(access_token, team['account_id'])
+                if sub_info['success']:
+                    Team.update_subscription_info(team_id, sub_info['active_start'], sub_info['active_until'], sub_info.get('will_renew'))
+
+                return jsonify({'success': True, 'message': '重新登录成功，Token 已更新'})
+            else:
+                 return jsonify({'success': False, 'error': '登录成功但未获取到 accessToken'})
+        else:
+            return jsonify({'success': False, 'error': '登录失败，未获取到 Session'})
+            
+    except Exception as e:
+        print(f"重新登录异常: {e}")
+        return jsonify({'success': False, 'error': f'系统异常: {str(e)}'})
+
+
+
 @app.route('/api/admin/teams/<int:team_id>/refresh-subscription', methods=['POST'])
 @admin_required
 def refresh_team_subscription(team_id):
