@@ -101,6 +101,21 @@ def login(email, password, proxy_str=None):
     cookie, json_data = login_verify.login_verify(cookie, email, password, proxies=proxies)
     all_cookie = merge_cookie_str(all_cookie, cookie)
     
+    if 'continue_url' not in json_data:
+        # 尝试提取错误信息
+        error_msg = "未知错误"
+        if 'details' in json_data:
+            error_msg = json_data['details']
+        elif 'error' in json_data:
+            err = json_data['error']
+            if isinstance(err, dict):
+                error_msg = err.get('message', str(err))
+            else:
+                error_msg = str(err)
+        
+        print(f"登录验证失败: {error_msg}, 原始数据: {json_data}")
+        raise Exception(f"登录失败: {error_msg}")
+
     time.sleep(2)
     
     # 6. 重定向 (Redirect)

@@ -1152,7 +1152,8 @@ def relogin_team(team_id):
             
     except Exception as e:
         print(f"重新登录异常: {e}")
-        return jsonify({'success': False, 'error': f'系统异常: {str(e)}'})
+        # 如果是已知错误信息（不包含 traceback 的简单消息），直接显示
+        return jsonify({'success': False, 'error': str(e)})
 
 
 
