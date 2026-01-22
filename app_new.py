@@ -7,6 +7,7 @@ import json
 import sqlite3
 from functools import wraps
 from database import init_db, Team, AccessKey, Invitation, AutoKickConfig, KickLog, LoginAttempt, MemberNote, Source, MaterialShare, ProxyAddress
+from utils import get_proxies_by_account
 from datetime import datetime, timedelta
 import time
 import pytz
@@ -102,7 +103,8 @@ def invite_to_team(access_token, account_id, email, team_id=None):
     }
     
     try:
-        response = cf_requests.post(url, headers=headers, json=payload, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.post(url, headers=headers, json=payload, impersonate="chrome110", proxies=proxies)
         
         if response.status_code in [200, 201]:
             data = response.json()
@@ -151,7 +153,8 @@ def cancel_invite_from_openai(access_token, account_id, email):
     }
     
     try:
-        response = cf_requests.delete(url, headers=headers, json=payload, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.delete(url, headers=headers, json=payload, impersonate="chrome110", proxies=proxies)
         
         if response.status_code in [200, 204]:
             return {"success": True}
@@ -179,7 +182,8 @@ def get_team_subscription(access_token, account_id):
     }
     
     try:
-        response = cf_requests.get(url, headers=headers, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.get(url, headers=headers, impersonate="chrome110", proxies=proxies)
         
         if response.status_code == 200:
             data = response.json()
@@ -215,7 +219,8 @@ def cancel_subscription_from_openai(access_token, account_id):
     }
     
     try:
-        response = cf_requests.post(url, headers=headers, json=payload, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.post(url, headers=headers, json=payload, impersonate="chrome110", proxies=proxies)
         
         if response.status_code == 200:
             return {"success": True}
@@ -1406,7 +1411,8 @@ def get_team_members(access_token, account_id, team_id=None):
     }
 
     try:
-        response = cf_requests.get(url, headers=headers, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.get(url, headers=headers, impersonate="chrome110", proxies=proxies)
         if response.status_code == 200:
             data = response.json()
             # 成功时重置检查成员的错误计数
@@ -1446,7 +1452,8 @@ def get_pending_invites(access_token, account_id):
     }
 
     try:
-        response = cf_requests.get(url, headers=headers, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.get(url, headers=headers, impersonate="chrome110", proxies=proxies)
         if response.status_code == 200:
             data = response.json()
             return {"success": True, "invites": data.get('items', [])}
@@ -1471,7 +1478,8 @@ def kick_member(access_token, account_id, user_id):
     }
 
     try:
-        response = cf_requests.delete(url, headers=headers, impersonate="chrome110")
+        proxies = get_proxies_by_account(account_id)
+        response = cf_requests.delete(url, headers=headers, impersonate="chrome110", proxies=proxies)
         if response.status_code == 200:
             return {"success": True}
         else:

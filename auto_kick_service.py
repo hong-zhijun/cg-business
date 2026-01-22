@@ -8,6 +8,7 @@ import concurrent.futures
 from datetime import datetime
 from curl_cffi import requests as cf_requests
 from database import Team, Invitation, AutoKickConfig, KickLog
+from utils import get_proxies_by_account
 import pytz
 
 
@@ -266,7 +267,8 @@ class AutoKickService:
         
         try:
             # 降低超时时间从 10 秒到 5 秒
-            response = cf_requests.get(url, headers=headers, impersonate="chrome110", timeout=5)
+            proxies = get_proxies_by_account(account_id)
+            response = cf_requests.get(url, headers=headers, impersonate="chrome110", timeout=5, proxies=proxies)
 
             if response.status_code == 200:
                 data = response.json()
@@ -308,7 +310,8 @@ class AutoKickService:
         }
         
         try:
-            response = cf_requests.delete(url, headers=headers, impersonate="chrome110", timeout=10)
+            proxies = get_proxies_by_account(account_id)
+            response = cf_requests.delete(url, headers=headers, impersonate="chrome110", timeout=10, proxies=proxies)
 
             if response.status_code == 200:
                 # 从invitations表中删除记录，释放位置

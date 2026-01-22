@@ -407,6 +407,15 @@ class Team:
             return dict(row) if row else None
 
     @staticmethod
+    def get_by_account_id(account_id):
+        """根据 account_id 获取 Team (用于查询代理)"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM teams WHERE account_id = ? LIMIT 1', (account_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    @staticmethod
     def update_token(team_id, access_token):
         """更新 Team 的 access_token，并重置错误计数"""
         with get_db() as conn:
