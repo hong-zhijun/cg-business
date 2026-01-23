@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
@@ -206,9 +206,15 @@
             <div class="mb-6 border-b border-gray-200 overflow-x-auto no-scrollbar">
                 <nav class="-mb-px flex md:grid md:grid-cols-5 min-w-full md:min-w-0" aria-label="Tabs">
                     <button
+                        onclick="switchTab('after_sales')"
+                        id="tab_after_sales"
+                        class="group-tab w-full flex justify-center border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        售后组
+                    </button>
+                    <button
                         onclick="switchTab('daily')"
                         id="tab_daily"
-                        class="group-tab w-full flex justify-center border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
+                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
                         当日组
                     </button>
                     <button
@@ -222,12 +228,6 @@
                         id="tab_trial"
                         class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
                         试用组
-                    </button>
-                    <button
-                        onclick="switchTab('after_sales')"
-                        id="tab_after_sales"
-                        class="group-tab w-full flex justify-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors hover:bg-gray-50">
-                        售后组
                     </button>
                     <button
                         onclick="switchTab('banned')"
@@ -403,7 +403,7 @@
                             id="clientSearch"
                             placeholder="搜索邮箱..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            onkeyup="if(event.key === 'Enter') searchMyClients()" />
+                            onkeyup="if (event.key === 'Enter') searchMyClients();" />
                         <svg
                             class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
                             fill="none"
@@ -476,7 +476,7 @@
                             id="invitationSearch"
                             placeholder="搜索邮箱..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-                            onkeyup="if(event.key === 'Enter') searchMyInvitations()" />
+                            onkeyup="if (event.key === 'Enter') searchMyInvitations();" />
                         <svg
                             class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
                             fill="none"
@@ -768,7 +768,7 @@
             });
 
             let currentAuth = null;
-            let currentGroupType = "daily";
+            let currentGroupType = "after_sales";
 
             function switchTab(groupType) {
                 currentGroupType = groupType;
@@ -899,8 +899,8 @@
                                     ${manageBadge}
                                 </h3>
                                 <p class="text-xs text-gray-500 mt-1 truncate max-w-[200px]" title="${team.email || ""}">${
-                        team.email || "未设置邮箱"
-                    }</p>
+                                    team.email || "未设置邮箱"
+                                }</p>
                             </div>
                             <span class="px-2 py-1 ${
                                 isFull ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
@@ -1469,10 +1469,10 @@
                                                 inv.status_text === "已加入"
                                                     ? "bg-green-100 text-green-800"
                                                     : inv.status === "failed"
-                                                    ? "bg-red-100 text-red-800"
-                                                    : inv.status === "expired"
-                                                    ? "bg-gray-100 text-gray-800"
-                                                    : "bg-blue-100 text-blue-800"
+                                                      ? "bg-red-100 text-red-800"
+                                                      : inv.status === "expired"
+                                                        ? "bg-gray-100 text-gray-800"
+                                                        : "bg-blue-100 text-blue-800"
                                             }">
                                             ${inv.status_text}
                                         </span>
@@ -1490,7 +1490,7 @@
                                         }
                                     </td>
                                 </tr>
-                            `
+                            `,
                                 )
                                 .join("");
                         }
@@ -1644,8 +1644,8 @@
                                         <span class="md:hidden text-xs text-gray-400 block mb-1">操作</span>
                                         <div class="flex gap-2">
                                             <button onclick="openNoteModal(${item.team_id}, '${item.user_id}', '${item.email}', '${encodeURIComponent(
-                                        item.note || ""
-                                    )}')" 
+                                                item.note || "",
+                                            )}')" 
                                                 class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm transition-colors duration-200">
                                                 备注
                                             </button>
@@ -1656,7 +1656,7 @@
                                         </div>
                                     </td>
                                 </tr>
-                            `
+                            `,
                                 )
                                 .join("");
                         }
@@ -1768,7 +1768,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            `
+                            `,
                                 )
                                 .join("");
                         }
@@ -1884,7 +1884,7 @@
                         (err) => {
                             console.error("Could not copy text: ", err);
                             fallbackCopyTextToClipboard(text);
-                        }
+                        },
                     );
                 } else {
                     fallbackCopyTextToClipboard(text);
