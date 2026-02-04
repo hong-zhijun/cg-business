@@ -165,6 +165,66 @@ def modify_user_role(access_token, account_id, user_id, role="account-admin"):
         return {"success": False, "error": str(e)}
 
 
+@app.route('/api/admin/teams/<int:team_id>/demote-owner', methods=['POST'])
+@admin_required
+def demote_team_owner(team_id):
+    """将 Team 拥有者降级为普通管理员"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    try:
+        # 1. 获取所有成员列表，找到拥有者
+        url = f"https://chatgpt.com/backend-api/accounts/{team['account_id']}/users"
+        
+        headers = {
+            "accept": "*/*",
+            "authorization": f"Bearer {team['access_token']}",
+            "chatgpt-account-id": team['account_id'],
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        
+        proxies = get_proxies_by_account(team['account_id'])
+        response = cf_requests.get(url, headers=headers, impersonate="chrome110", proxies=proxies)
+        
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"获取成员列表失败: {response.text}"}), 500
+            
+        users = response.json().get('items', [])
+        owner_user = None
+        
+        # 查找拥有者 (role usually is 'owner' or 'primary-owner')
+        # 这里我们假设拥有者的 email 可能和 team email 匹配，或者通过 role 判断
+        # 用户提示 "account和user就是当前team的拥有者"，我们优先找 role='owner'
+        for user in users:
+            if user.get('role') in ['owner', 'primary-owner']:
+                owner_user = user
+                break
+        
+        if not owner_user:
+             # 如果找不到明确的 owner 角色，尝试匹配 team email (如果有)
+             if team.get('email'):
+                 for user in users:
+                     if user.get('email') == team['email']:
+                         owner_user = user
+                         break
+        
+        if not owner_user:
+             # 如果还是找不到，尝试取列表第一个 (极其不推荐，但在某些单人team情况下可能奏效，暂时报错)
+             return jsonify({"success": False, "error": "未找到拥有者用户 (Role='owner' 或 Email匹配)"}), 404
+             
+        # 2. 调用降级接口
+        result = modify_user_role(team['access_token'], team['account_id'], owner_user['id'], role="account-admin")
+        
+        if result.get('success'):
+            return jsonify({"success": True, "message": "已成功将拥有者降级为普通管理员"})
+        else:
+            return jsonify({"success": False, "error": result.get('error')}), 500
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 def cancel_invite_from_openai(access_token, account_id, email):
     """调用 ChatGPT API 撤销邀请"""
     url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites"
@@ -1802,25 +1862,6 @@ def public_kick_member(team_id):
             success=False,
             error_message=result.get('error')
         )
-        return jsonify({"success": False, "error": result.get('error')}), 500
-
-
-@app.route('/api/admin/teams/<int:team_id>/members/<user_id>/role', methods=['POST'])
-@admin_required
-def update_team_member_role(team_id, user_id):
-    """修改 Team 成员角色"""
-    team = Team.get_by_id(team_id)
-    if not team:
-        return jsonify({"success": False, "error": "Team 不存在"}), 404
-
-    data = request.json
-    role = data.get('role', 'standard-user')
-
-    result = modify_user_role(team['access_token'], team['account_id'], user_id, role)
-
-    if result['success']:
-        return jsonify({"success": True, "message": "成员角色修改成功"})
-    else:
         return jsonify({"success": False, "error": result.get('error')}), 500
 
 

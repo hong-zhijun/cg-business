@@ -171,6 +171,18 @@
                 取消订阅
             </button>
             <button
+                id="detail_demote_owner_btn"
+                class="w-full flex justify-center items-center px-4 py-2 bg-orange-50 border border-orange-200 shadow-sm text-sm font-medium rounded-lg text-orange-700 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                权限降级
+            </button>
+            <button
                 id="detail_delete_btn"
                 class="w-full flex justify-center items-center px-4 py-2 bg-red-50 border border-red-200 shadow-sm text-sm font-medium rounded-lg text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,6 +294,39 @@
         const cancelSubBtn = document.getElementById("detail_cancel_sub_btn");
         cancelSubBtn.onclick = function () {
             cancelSubscription(team.id, team.name);
+        };
+
+        // 绑定权限降级按钮事件
+        const demoteOwnerBtn = document.getElementById("detail_demote_owner_btn");
+        demoteOwnerBtn.onclick = async function () {
+            if (!confirm(`确定要将 Team "${team.name}" 的拥有者降级为普通管理员吗？\n此操作不可逆（除非有其他 Owner 恢复）！`)) {
+                return;
+            }
+
+            // 添加加载状态
+            const originalText = this.innerHTML;
+            this.innerHTML =
+                '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-orange-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>处理中...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`/api/admin/teams/${team.id}/demote-owner`, {
+                    method: "POST",
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast("权限降级成功");
+                } else {
+                    alert("降级失败: " + (data.error || "未知错误"));
+                }
+            } catch (error) {
+                alert("请求失败: " + error.message);
+            } finally {
+                // 恢复按钮状态
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
         };
 
         // 绑定删除按钮事件
