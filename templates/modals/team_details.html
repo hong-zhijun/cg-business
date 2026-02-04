@@ -299,7 +299,7 @@
         // 绑定权限降级按钮事件
         const demoteOwnerBtn = document.getElementById("detail_demote_owner_btn");
         demoteOwnerBtn.onclick = async function () {
-            if (!confirm(`确定要将 Team "${team.name}" 的拥有者降级为普通管理员吗？\n此操作不可逆（除非有其他 Owner 恢复）！`)) {
+            if (!(await showConfirm(`确定要将 Team "${team.name}" 的拥有者降级为普通管理员吗？\n此操作不可逆（除非有其他 Owner 恢复）！`))) {
                 return;
             }
 
@@ -318,10 +318,10 @@
                 if (data.success) {
                     showToast("权限降级成功");
                 } else {
-                    alert("降级失败: " + (data.error || "未知错误"));
+                    showToast("降级失败: " + (data.error || "未知错误"), "error");
                 }
             } catch (error) {
-                alert("请求失败: " + error.message);
+                showToast("请求失败: " + error.message, "error");
             } finally {
                 // 恢复按钮状态
                 this.innerHTML = originalText;
