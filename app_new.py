@@ -133,6 +133,38 @@ def invite_to_team(access_token, account_id, email, team_id=None):
         return {"success": False, "error": str(e)}
 
 
+def modify_user_role(access_token, account_id, user_id, role="account-admin"):
+    """修改成员角色"""
+    url = f"https://chatgpt.com/backend-api/accounts/{account_id}/users/{user_id}"
+
+    headers = {
+        "accept": "*/*",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "authorization": f"Bearer {access_token}",
+        "chatgpt-account-id": account_id,
+        "content-type": "application/json",
+        "origin": "https://chatgpt.com",
+        "referer": "https://chatgpt.com/admin",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    }
+
+    payload = {
+        "role": role
+    }
+
+    try:
+        proxies = get_proxies_by_account(account_id)
+        # 使用 PATCH 方法更新用户信息
+        response = cf_requests.patch(url, headers=headers, json=payload, impersonate="chrome110", proxies=proxies)
+        
+        if response.status_code == 200:
+            return {"success": True}
+        else:
+            return {"success": False, "error": response.text}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def cancel_invite_from_openai(access_token, account_id, email):
     """调用 ChatGPT API 撤销邀请"""
     url = f"https://chatgpt.com/backend-api/accounts/{account_id}/invites"
@@ -1770,6 +1802,25 @@ def public_kick_member(team_id):
             success=False,
             error_message=result.get('error')
         )
+        return jsonify({"success": False, "error": result.get('error')}), 500
+
+
+@app.route('/api/admin/teams/<int:team_id>/members/<user_id>/role', methods=['POST'])
+@admin_required
+def update_team_member_role(team_id, user_id):
+    """修改 Team 成员角色"""
+    team = Team.get_by_id(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team 不存在"}), 404
+
+    data = request.json
+    role = data.get('role', 'standard-user')
+
+    result = modify_user_role(team['access_token'], team['account_id'], user_id, role)
+
+    if result['success']:
+        return jsonify({"success": True, "message": "成员角色修改成功"})
+    else:
         return jsonify({"success": False, "error": result.get('error')}), 500
 
 
