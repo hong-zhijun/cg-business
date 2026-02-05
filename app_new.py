@@ -1191,8 +1191,9 @@ def relogin_team(team_id):
     # 4. 调用登录接口
     try:
         from login_package.login import login
-        print(f"尝试重新登录 Team {team_id}: {email} (Proxy: {'Yes' if proxy_str else 'No'})")
-        session_data = login(email, password, proxy_str=proxy_str)
+        account_id = team.get('account_id')
+        print(f"尝试重新登录 Team {team_id}: {email} (AccountID: {account_id}) (Proxy: {'Yes' if proxy_str else 'No'})")
+        session_data = login(email, password, account_id, proxy_str=proxy_str)
         
         if session_data:
             # 5. 更新 Token

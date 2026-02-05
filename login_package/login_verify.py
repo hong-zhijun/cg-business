@@ -35,7 +35,7 @@ headers['openai-sentinel-token'] = get_sentinel_token_by_flow('password_verify')
 def login_verify(cookies,email,password, proxies=None):
     headers['cookie'] = cookies
     data = {
-        "username": email,
+        # "username": email,
         "password": password
     }
     response = requests.post(url, headers=headers,  json=data, proxies=proxies)

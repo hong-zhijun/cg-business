@@ -4,6 +4,7 @@ from . import login_verify
 from . import session
 from . import red
 from . import openai
+from . import select_workspace
 import time
 import json
 from collections import OrderedDict
@@ -62,7 +63,7 @@ def merge_cookie_str(*cookie_strs: str) -> str:
             jar[k] = v  # 覆盖更新
     return "; ".join([f"{k}={v}" for k, v in jar.items()])
 
-def login(email, password, proxy_str=None):
+def login(email, password, account_id, proxy_str=None):
     print('开始 login 流程')
     
     proxies = parse_proxy_str(proxy_str)
@@ -101,7 +102,8 @@ def login(email, password, proxy_str=None):
     cookie, json_data = login_verify.login_verify(cookie, email, password, proxies=proxies)
     all_cookie = merge_cookie_str(all_cookie, cookie)
     
-    if 'continue_url' not in json_data:
+    # 检查登录错误
+    if 'error' in json_data or 'details' in json_data:
         # 尝试提取错误信息
         error_msg = "未知错误"
         if 'details' in json_data:
@@ -117,26 +119,34 @@ def login(email, password, proxy_str=None):
         raise Exception(f"登录失败: {error_msg}")
 
     time.sleep(2)
+
+    # 5.5 选择 Workspace (新增步骤)
+    print(f'5. 选择 Workspace (select_workspace): {account_id}')
+    # select_workspace 需要使用 accumulated all_cookie
+    workspace_cookie, workspace_data = select_workspace.select_workspace(all_cookie, account_id, proxies=proxies)
+    print('workspace data:', workspace_data)
+    all_cookie = merge_cookie_str(all_cookie, workspace_cookie)
+
+    if 'continue_url' not in workspace_data:
+         print(f"选择 Workspace 失败，未找到 continue_url: {workspace_data}")
+         raise Exception("选择 Workspace 失败，未找到 continue_url")
     
     # 6. 重定向 (Redirect)
-    print('5. 跳转 (redirect)')
+    print('6. 跳转 (redirect)')
     # redirect 需要使用 accumulated all_cookie
-    cookies = red.redirect(json_data['continue_url'], all_cookie, proxies=proxies)
+    cookies = red.redirect(workspace_data['continue_url'], all_cookie, proxies=proxies)
     all_cookie = merge_cookie_str(all_cookie, cookies)
     
     time.sleep(2)
     
     # 7. 获取 Session
-    print('6. 获取会话 (get_session)')
+    print('7. 获取会话 (get_session)')
     # get_session 使用的是 redirect 返回的 cookies
     session_json = session.get_session(cookies, proxies=proxies)
     
     return json.dumps(session_json, ensure_ascii=False)
 
 if __name__ == '__main__':
-    result = login(email, password)
-    if result:
-        print('登录成功！Session信息：')
-        print(result)
-    else:
-        print('登录流程未完成或失败。')
+    # 注意：这里需要填入真实的 account_id 才能测试
+    # result = login(email, password, "your_account_id")
+    pass
