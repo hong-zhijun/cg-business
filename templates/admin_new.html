@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
@@ -553,10 +553,13 @@
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">${formatDate(team.active_until)}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-500 text-sm w-24">
                             <button onclick="editTeamNote(${team.id}, '${team.name.replace(/'/g, "\\'")}',${`'${(team.note || "")
-                        .replace(/'/g, "\\'")
-                        .replace(/\n/g, "\\n")}'`})" class="text-gray-600 hover:text-blue-600 flex items-center truncate w-full text-left" title="${
-                        team.note || "点击添加备注"
-                    }">
+                                .replace(/'/g, "\\'")
+                                .replace(
+                                    /\n/g,
+                                    "\\n",
+                                )}'`})" class="text-gray-600 hover:text-blue-600 flex items-center truncate w-full text-left" title="${
+                                team.note || "点击添加备注"
+                            }">
                                 <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
@@ -576,8 +579,8 @@
                                 </select>
                                 <span class="text-gray-300">|</span>
                                 <button onclick="toggleTeamPublic(${team.id}, ${!team.is_public})" class="${
-                        team.is_public ? "text-blue-600 hover:text-blue-900" : "text-gray-400 hover:text-gray-600"
-                    } flex items-center">
+                                    team.is_public ? "text-blue-600 hover:text-blue-900" : "text-gray-400 hover:text-gray-600"
+                                } flex items-center">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                     ${team.is_public ? "公开" : "私有"}
                                 </button>
@@ -1548,7 +1551,10 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- 邀请码管理 -->
                     <button
-                        onclick="closeModal('featureSummaryModal'); openKeysListModal()"
+                        onclick="
+                            closeModal('featureSummaryModal');
+                            openKeysListModal();
+                        "
                         class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all group">
                         <svg class="w-8 h-8 mb-2 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1562,7 +1568,10 @@
 
                     <!-- 自动踢人 -->
                     <button
-                        onclick="closeModal('featureSummaryModal'); openModal('autoKickConfigModal')"
+                        onclick="
+                            closeModal('featureSummaryModal');
+                            openModal('autoKickConfigModal');
+                        "
                         class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-all group">
                         <svg class="w-8 h-8 mb-2 text-orange-400 group-hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1577,7 +1586,10 @@
 
                     <!-- 编辑来源 -->
                     <button
-                        onclick="closeModal('featureSummaryModal'); openSourcesModal()"
+                        onclick="
+                            closeModal('featureSummaryModal');
+                            openSourcesModal();
+                        "
                         class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all group">
                         <svg class="w-8 h-8 mb-2 text-purple-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1591,7 +1603,10 @@
 
                     <!-- 素材管理 -->
                     <button
-                        onclick="closeModal('featureSummaryModal'); openMaterialManagementModal()"
+                        onclick="
+                            closeModal('featureSummaryModal');
+                            openMaterialManagementModal();
+                        "
                         class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition-all group">
                         <svg class="w-8 h-8 mb-2 text-indigo-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -1616,7 +1631,10 @@
 
                     <!-- 代理管理 -->
                     <button
-                        onclick="closeModal('featureSummaryModal'); openProxyManagementModal()"
+                        onclick="
+                            closeModal('featureSummaryModal');
+                            openProxyManagementModal();
+                        "
                         class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-all group">
                         <svg class="w-8 h-8 mb-2 text-teal-400 group-hover:text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path

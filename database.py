@@ -377,14 +377,14 @@ class Team:
     
     @staticmethod
     def get_all(group_type=None):
-        """获取所有 Teams，按到期时间倒序排列（还有很久才过期的在上面，快过期的在下面）"""
+        """获取所有 Teams，按创建时间倒序排列（最新添加的在最上面）"""
         with get_db() as conn:
             cursor = conn.cursor()
             
             if group_type:
-                cursor.execute('SELECT * FROM teams WHERE group_type = ? ORDER BY active_until DESC', (group_type,))
+                cursor.execute('SELECT * FROM teams WHERE group_type = ? ORDER BY created_at DESC', (group_type,))
             else:
-                cursor.execute('SELECT * FROM teams ORDER BY active_until DESC')
+                cursor.execute('SELECT * FROM teams ORDER BY created_at DESC')
             
             return [dict(row) for row in cursor.fetchall()]
     
