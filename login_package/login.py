@@ -115,8 +115,9 @@ def login(email, password, account_id, proxy_str=None):
             else:
                 error_msg = str(err)
         
-        print(f"登录验证失败: {error_msg}, 原始数据: {json_data}")
-        raise Exception(f"登录失败: {error_msg}")
+        msg = f"登录验证失败: {error_msg} | 原始响应: {json.dumps(json_data, ensure_ascii=False)}"
+        print(msg)
+        raise Exception(msg)
 
     time.sleep(2)
 
@@ -128,8 +129,9 @@ def login(email, password, account_id, proxy_str=None):
     all_cookie = merge_cookie_str(all_cookie, workspace_cookie)
 
     if 'continue_url' not in workspace_data:
-         print(f"选择 Workspace 失败，未找到 continue_url: {workspace_data}")
-         raise Exception("选择 Workspace 失败，未找到 continue_url")
+         msg = f"选择 Workspace 失败，未找到 continue_url | 响应: {json.dumps(workspace_data, ensure_ascii=False)}"
+         print(msg)
+         raise Exception(msg)
     
     # 6. 重定向 (Redirect)
     print('6. 跳转 (redirect)')

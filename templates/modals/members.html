@@ -99,7 +99,7 @@
             <div class="space-y-3">`;
 
         members.forEach((member) => {
-            const isOwner = member.role === "account-owner";
+            const isOwner = ["account-owner", "account-admin", "primary-owner"].includes(member.role);
             const joinTime = member.created_at || "未知时间";
 
             html += `

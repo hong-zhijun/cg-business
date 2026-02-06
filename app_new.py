@@ -1224,7 +1224,7 @@ def relogin_team(team_id):
                  if isinstance(session_data, dict):
                      print(f"Keys: {session_data.keys()}")
                  
-                 return jsonify({'success': False, 'error': '登录成功但无法解析 accessToken'})
+                 return jsonify({'success': False, 'error': f'登录成功但无法解析 accessToken，返回数据类型: {type(session_data)}'})
 
             if access_token:
                 Team.update_token(team_id, access_token)
@@ -1244,12 +1244,14 @@ def relogin_team(team_id):
 
                 return jsonify({'success': True, 'message': '重新登录成功，Token 已更新'})
             else:
-                 return jsonify({'success': False, 'error': '登录成功但未获取到 accessToken'})
+                 return jsonify({'success': False, 'error': '获取到的 AccessToken 为空'})
         else:
-            return jsonify({'success': False, 'error': '登录失败，未获取到 Session'})
+             return jsonify({'success': False, 'error': '登录失败: login函数返回None (可能是账号需要注册或验证流程被阻断)'})
             
     except Exception as e:
-        print(f"重新登录异常: {e}")
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"!!! RELOGIN ERROR (Team {team_id}) !!!\n{error_detail}\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         # 如果是已知错误信息（不包含 traceback 的简单消息），直接显示
         return jsonify({'success': False, 'error': str(e)})
 
