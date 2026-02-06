@@ -402,14 +402,14 @@ def join_team():
 
         tried_teams.append(team['name'])
 
-        # 检查实际成员数（API获取）
+        # 实际成员数（API获取）
         members_result = get_team_members(team['access_token'], team['account_id'], team['id'])
         if not members_result['success']:
             last_error = f"无法获取{team['name']}成员列表"
             continue
 
         members = members_result.get('members', [])
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
 
         # 实际成员数已满，跳过此Team
         if len(non_owner_members) >= 4:
@@ -1055,7 +1055,7 @@ def create_team():
         members_result = get_team_members(access_token, account_id, target_team_id)
         if members_result['success']:
             members = members_result.get('members', [])
-            non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+            non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
             Team.update_member_count(target_team_id, len(non_owner_members))
 
         return jsonify({
@@ -1133,7 +1133,7 @@ def update_team_token(team_id):
             members_result = get_team_members(access_token, team['account_id'], team_id)
             if members_result['success']:
                 members = members_result.get('members', [])
-                non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+                non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
                 Team.update_member_count(team_id, len(non_owner_members))
                 
             # 刷新订阅信息
@@ -1234,7 +1234,7 @@ def relogin_team(team_id):
                 members_result = get_team_members(access_token, team['account_id'], team_id)
                 if members_result['success']:
                     members = members_result.get('members', [])
-                    non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+                    non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
                     Team.update_member_count(team_id, len(non_owner_members))
                     
                 # 刷新订阅信息
@@ -1716,7 +1716,7 @@ def refresh_members(team_id):
         members = result.get('members', [])
         
         # 更新数据库中的成员数量
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
         Team.update_member_count(team_id, len(non_owner_members))
 
         # 同步每个成员到 member_notes
@@ -1997,6 +1997,10 @@ def kick_team_member(team_id, user_id):
     if not member:
         return jsonify({"success": False, "error": "成员不存在"}), 404
 
+    # 检查是否为所有者/管理员
+    if member.get('role') in ['account-owner', 'account-admin', 'primary-owner']:
+        return jsonify({"success": False, "error": "不能踢出团队所有者/管理员"}), 400
+
     # 执行踢人
     result = kick_member(team['access_token'], team['account_id'], user_id)
 
@@ -2153,7 +2157,7 @@ def admin_invite_member(team_id):
     if members_result['success']:
         # 获取最新成员列表
         members = members_result.get('members', [])
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
         current_count = len(non_owner_members)
         
         # 同步更新数据库
@@ -2354,8 +2358,8 @@ def kick_member_by_email(team_id):
             return jsonify({"success": False, "error": f"未找到邮箱为 {email} 的成员或邀请记录"}), 404
 
     # 检查是否为所有者
-    if member.get('role') == 'account-owner':
-        return jsonify({"success": False, "error": "不能踢出团队所有者"}), 400
+    if member.get('role') in ['account-owner', 'account-admin', 'primary-owner']:
+        return jsonify({"success": False, "error": "不能踢出团队所有者/管理员"}), 400
 
     user_id = member.get('user_id') or member.get('id')
 
@@ -2439,7 +2443,7 @@ def admin_invite_auto():
             continue
 
         members = members_result.get('members', [])
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
 
         # 实际成员数已满，跳过
         if len(non_owner_members) >= 4:
@@ -2618,8 +2622,8 @@ def kick_member_by_email_auto():
             return jsonify({"success": False, "error": f"未找到邮箱为 {email} 的成员或邀请记录"}), 404
 
     # 检查是否为所有者
-    if found_member.get('role') == 'account-owner':
-        return jsonify({"success": False, "error": "不能踢出团队所有者"}), 400
+    if found_member.get('role') in ['account-owner', 'account-admin', 'primary-owner']:
+        return jsonify({"success": False, "error": "不能踢出团队所有者/管理员"}), 400
 
     user_id = found_member.get('user_id') or found_member.get('id')
 
@@ -3102,7 +3106,7 @@ def public_invite_member(team_id):
     if members_result['success']:
         # 获取最新成员列表
         members = members_result.get('members', [])
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
         current_count = len(non_owner_members)
         
         # 同步更新数据库
@@ -3363,7 +3367,7 @@ def public_refresh_members(team_id):
         members = result.get('members', [])
         
         # 更新数据库中的成员数量
-        non_owner_members = [m for m in members if m.get('role') != 'account-owner']
+        non_owner_members = [m for m in members if m.get('role') not in ['account-owner', 'account-admin', 'primary-owner']]
         Team.update_member_count(team_id, len(non_owner_members))
 
         # 同步每个成员到 member_notes

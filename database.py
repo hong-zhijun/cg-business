@@ -971,14 +971,14 @@ class Invitation:
             # 1. 实际成员数 (排除 Owner)
             cursor.execute('''
                 SELECT COUNT(*) FROM member_notes 
-                WHERE team_id = ? AND role != 'account-owner'
+                WHERE team_id = ? AND role NOT IN ('account-owner', 'account-admin', 'primary-owner')
             ''', (team_id,))
             member_count = cursor.fetchone()[0]
             
             # 2. 获取实际成员邮箱集合
             cursor.execute('''
                 SELECT email FROM member_notes 
-                WHERE team_id = ? AND role != 'account-owner'
+                WHERE team_id = ? AND role NOT IN ('account-owner', 'account-admin', 'primary-owner')
             ''', (team_id,))
             member_emails = {row[0].lower() for row in cursor.fetchall() if row[0]}
             
@@ -1339,7 +1339,7 @@ class MemberNote:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT COUNT(*) FROM member_notes 
-                WHERE role != 'account-owner' OR role IS NULL
+                WHERE role NOT IN ('account-owner', 'account-admin', 'primary-owner') OR role IS NULL
             ''')
             return cursor.fetchone()[0]
 
@@ -1356,7 +1356,7 @@ class MemberNote:
                     JOIN teams t ON mn.team_id = t.id
                     WHERE mn.source IS NOT NULL 
                       AND mn.source != '' 
-                      AND (mn.role != 'account-owner' OR mn.role IS NULL)
+                      AND (mn.role NOT IN ('account-owner', 'account-admin', 'primary-owner') OR mn.role IS NULL)
                       AND t.group_type = ?
                     GROUP BY mn.source 
                     ORDER BY count DESC
@@ -1367,7 +1367,7 @@ class MemberNote:
                     FROM member_notes 
                     WHERE source IS NOT NULL 
                       AND source != '' 
-                      AND (role != 'account-owner' OR role IS NULL) 
+                      AND (role NOT IN ('account-owner', 'account-admin', 'primary-owner') OR role IS NULL) 
                     GROUP BY source 
                     ORDER BY count DESC
                 ''')

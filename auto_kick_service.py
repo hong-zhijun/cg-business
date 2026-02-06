@@ -229,9 +229,9 @@ class AutoKickService:
             member_role = member.get('role', '')
             member_user_id = member.get('id', '')
 
-            # 跳过所有者
-            if member_role == 'account-owner':
-                print(f"   ✅ {member_email} (所有者,跳过)")
+            # 跳过所有者和管理员
+            if member_role in ['account-owner', 'account-admin', 'primary-owner']:
+                print(f"   ✅ {member_email} (所有者/管理员,跳过)")
                 owner_count += 1
                 continue
 
